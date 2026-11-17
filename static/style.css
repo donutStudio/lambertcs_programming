@@ -1,0 +1,171 @@
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    font-family: Arial, sans-serif;
+    background: #f5f5f5;
+}
+
+.layout {
+    display: grid;
+    grid-template-columns: 40% 60%;
+    height: 100vh;
+    width: 100%;
+    padding: 10px;
+    gap: 10px;
+}
+
+.problem-panel,
+.editor-panel,
+.terminal-panel {
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: white;
+}
+
+.panel-header {
+    height: 45px;
+    padding: 0 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #ddd;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+/* problem markdown stuff */
+
+.problem-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+.problem-content {
+    flex: 1;
+    min-height: 0;
+    padding: 20px;
+    overflow-y: auto;
+    line-height: 1.6;
+}
+
+.problem-content h1 {
+    margin-top: 0;
+}
+
+.problem-content pre {
+    background: #f1f1f1;
+    padding: 12px;
+    border-radius: 5px;
+    overflow-x: auto;
+}
+
+.problem-content code {
+    font-family: Consolas, monospace;
+}
+
+.problem-content table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.problem-content th,
+.problem-content td {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+.right-panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    min-width: 0;
+    gap: 10px;
+}
+
+.editor-panel {
+    flex: 3;
+    display: flex;
+    flex-direction: column;
+}
+
+#editor {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+}
+
+/* select language and run */
+
+.controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+select {
+    padding: 6px 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background: white;
+    cursor: pointer;
+}
+
+button {
+    padding: 7px 16px;
+    background: #238636;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+button:hover {
+    background: #2ea043;
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.terminal-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+#output {
+    flex: 1;
+    min-height: 0;
+    margin: 0;
+    padding: 15px;
+    overflow: auto;
+    background: #181818;
+    color: #e6e6e6;
+    font-family: Consolas, monospace;
+    font-size: 13px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+/*
+grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+
+.editor-panel {
+    flex: 3;
+}
+
+.terminal-panel {
+    flex: 1;
+} */

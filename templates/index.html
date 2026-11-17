@@ -1,0 +1,59 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lambert CS editor</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <div class="layout">
+
+        <section class="problem-panel">
+            <div class="panel-header">Problem</div>
+
+            <div class="problem-content">
+                {{ problem_html | safe }}
+            </div>
+        </section>
+
+        <section class="right-panel">
+
+            <div class="editor-panel">
+
+                <div class="panel-header">
+                    <span>Editor</span>
+
+                    <div class="controls">
+                        <select id="language">
+                            <option value="python">Python</option>
+                            <option value="java">Java</option>
+                            <option value="cpp">C++</option>
+                        </select>
+
+                        <button id="run-button">▶ Run</button>
+                    </div>
+                </div>
+
+                <div id="editor"></div>
+
+            </div>
+
+            <div class="terminal-panel">
+                <div class="panel-header">Terminal</div>
+
+                <pre id="output">Code output will be here!</pre>
+            </div>
+
+        </section>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.52.0/min/vs/loader.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+</body>
+</html>
