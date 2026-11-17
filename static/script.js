@@ -85,6 +85,13 @@ require(["vs/editor/editor.main"], function () {
         }
     );
 
+    document.getElementById("reset-button").addEventListener("click", function () {
+        const language = languageSelect.value;
+        const code = defaultCode[language];
+        editor.setValue(code);
+        savedCode[language] = code;
+    });
+
     // no full language server so just like hardcoded suggestions and shit
     const suggestions = {
         python: [

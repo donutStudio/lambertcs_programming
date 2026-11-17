@@ -169,3 +169,10 @@ grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
 .terminal-panel {
     flex: 1;
 } */
+
+#reset-button {
+    background: #555;
+}
+#reset-button:hover {
+    background: #444;
+}
