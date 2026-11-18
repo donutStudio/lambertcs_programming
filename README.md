@@ -1,6 +1,7 @@
-# CS club programming
+# CS club programming assessments
 
-A small Flask website with server-rendered HTML/CSS and a Monaco code editor.
+A Flask app with a compact dark assessment workspace, Monaco Editor, short
+answers, standalone instructions, and server-owned accountless attempts.
 
 ## Run locally
 
@@ -11,33 +12,112 @@ python -m pip install -r requirements.txt
 python app.py
 ```
 
-Open http://127.0.0.1:5000/ to choose an assessment. Each assessment presents its
-questions in the existing editor interface.
-Java needs `javac` and `java` on PATH; C++ needs `g++`. Monaco loads from its
-existing CDN and requires internet access.
+Open http://127.0.0.1:5000/. Monaco loads from its CDN. Java requires `javac`
+and `java`; C++ requires `g++`. Use Python, Java, or C++ for either sample set.
 
-## Code layout
+The menu contains two samples: untimed practice with unlimited attempts and a
+30-minute assessment with one attempt. Both have instructions and five coding
+problems. The timed assessment also has a separate name/email/student ID question.
+Questions use numbers; task titles belong to the stimulus. `/editor` remains
+available by direct URL for development, without a stimulus or menu link.
 
-- `app.py`: server entry point.
-- `club/__init__.py`: Flask application factory.
-- `club/routes.py`: page rendering and submission validation.
-- `club/execution.py`: compilation and execution.
-- `club/problems.py`: Markdown problem loading.
-- `club/languages.py`: language options, starter code, completion words.
-- `club/config.py`: paths, execution limits, editor CDN location.
-- `templates/`: assessments placeholder and editor pages.
-- `static/`: styles and browser editor interactions.
+## Workspace
 
-Language data is rendered by Python into the editor page as JSON. JavaScript
-handles Monaco, language switching, temporary per-language drafts, reset, and
-sending code to the Python server. Drafts last until the page is refreshed.
+Drag the stimulus/response divider, explorer divider, or editor/output divider.
+Dividers also accept arrow keys when focused. Files toggles the explorer. The
+active source file follows the selected language, with a separate draft for each
+language. Ctrl+Enter runs code. Alt+Left/Right changes questions.
+
+Run starts a live process. Enter sends a line from inside Terminal, EOF (or
+Ctrl+D) closes stdin, and Stop (or Ctrl+C) stops execution. Processes stop after
+120 seconds or at the output limit. Changing questions stops the active program.
+Check **Pretyped input** for the old batch-stdin behavior; it starts off unchecked.
+Batch runs and tests retain the five-second execution timeout.
+
+IntelliSense includes language suggestions and names from the current source.
+Debounced diagnostics underline Python syntax errors and unused imports; Java
+and C++ use installed compilers for errors/warnings without running the program.
+These checks are best effort, not full language servers or a proof of correctness.
+
+## Attempts and submissions
+
+`submissions/attempts.sqlite3` stores device records, attempt counts, start times,
+deadlines, drafts, submission status/reason, and verified test results. The browser
+receives a signed HttpOnly, SameSite cookie containing only a random device ID.
+The signing key persists in `submissions/.session-key`, or set `SECRET_KEY` in the
+server environment. Back up the database and key together. Neither is committed.
+Browser storage does not control attempts, deadlines, or scores. Drafts save
+automatically; the toolbar reports failures and retries. A submission succeeds
+only after the server acknowledges it. Late edits are rejected and attempts close
+at their server deadline, even if the browser clock is changed or the page closes.
+Expiry is materialized on the next server read/export; the deadline is authoritative.
+
+Accountless identification has limits. The device cookie is the primary identity.
+The server records IP and browser user-agent and keeps a keyed hash of their
+combination as a conservative quota signal. Deleting cookies cannot clear the
+stored quota for that network/browser combination. A match never reveals saved
+answers: without the original cookie, the student cannot resume the old attempt.
+Different students using the same network and browser version can share this
+quota; switching networks/browser or devices may evade it. No accountless IP or
+device heuristic can guarantee one real person per attempt. Shared school networks
+need an operator policy for resolving collisions. IPs are taken from the direct
+connection, not client-supplied forwarding headers. Configure a trusted reverse
+proxy deliberately before deploying; otherwise all proxied users may share its IP.
+
+There is no public submissions export endpoint. Review/export on the server:
+
+```powershell
+.\.venv\Scripts\python.exe -m flask --app app list-submissions
+.\.venv\Scripts\python.exe -m flask --app app show-submission ATTEMPT_ID
+.\.venv\Scripts\python.exe -m flask --app app export-submissions --output submissions/export.csv
+```
+
+The CSV includes answers, server test results, timestamps, attempt/device IDs,
+submission reason, IP, and browser details. Existing legacy JSON submissions are
+left untouched; new attempts use SQLite. Test scores are calculated on the server,
+and invalidated if tested code changes. Hidden test inputs/expected answers and
+passcodes are not sent in the page configuration. Scores describe tests actually
+run, not a separate final automatic grading pass.
+
+## Assessment configuration
+
+`assessments/assignments.json` lists the assessment files. Supported response
+widgets are `code_editor`, `short_answer`, and `stimulus_only`. Code widgets retain
+language selection, per-language starter code/drafts, tests, input/output controls,
+IntelliSense, explorer visibility, and read-only settings. Stimulus-only questions
+reference Markdown in `stimuli`. Short answers support character limits, numeric
+input/ranges, and email validation. Time limits, attempts, passcodes, early-submit,
+auto-submit-on-leave, and score visibility are assessment-level settings.
+
+## Deployment boundary
+
+The supplied subprocess runner executes code on its host. It is for trusted local
+development, not untrusted student code. Remote execution/compilation is refused
+by default. Before hosting on the club website, integrate an isolated execution
+service for batch runs, live stdin, test runs, and compiler diagnostics. Do not
+expose this local runner through a loopback reverse proxy: loopback checks do not
+provide isolation. `ALLOW_UNSAFE_REMOTE_EXECUTION` exists only for explicitly
+trusted testing environments, never as a production solution.
+
+Run the web app behind a production WSGI server with HTTPS, set `COOKIE_SECURE=1`,
+protect/back up the submissions directory, and configure trusted proxy headers.
+Interactive process handles currently live in one server process, so use one
+threaded worker for local testing; an external runner must own handles across
+workers in production. Do not enable Flask debug mode on the public site.
 
 ## Checks
 
 ```powershell
-python -m unittest discover -s tests -v
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+node --check static/assessment.js
+node --check static/home.js
 ```
 
-The current runner executes programs directly on the server machine; it is
-intended for trusted local use. A temporary directory and timeout are not an
-execution sandbox. Isolation is needed before accepting untrusted submissions.
+## Math in Markdown
+
+Stimuli and short-answer prompts support KaTeX math: `$x_i^2$` or `\(x_i^2\)`
+for inline expressions, and `$$\frac{a}{b}$$` or `\[\frac{a}{b}\]` for display
+expressions. Display expressions can span lines. Code spans/blocks stay literal;
+escape currency dollar signs as `\$`. In assessment JSON, double backslashes
+(for example `"$\\frac{a}{b}$"`). KaTeX loads from a pinned CDN version; if it
+cannot load, the original math source remains readable.

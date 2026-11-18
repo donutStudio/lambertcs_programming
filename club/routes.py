@@ -1,29 +1,80 @@
-"""Assessment pages, submissions, and the local code runner."""
-import csv
-import io
+"""Assessment pages and server-owned, accountless attempt API."""
+import copy
+import hashlib
+import hmac
 import json
+import secrets
 import subprocess
-from datetime import datetime, timezone
+import time
+from urllib.parse import urlsplit
 
-from flask import Blueprint, current_app, jsonify, make_response, render_template, request, url_for
+from flask import Blueprint, current_app, jsonify, render_template, request, session, url_for
 
-from .assessments import AssessmentAttempt, AssessmentParser
-from .config import BASE_DIR, MAX_CODE_LENGTH, MONACO_BASE
+from .assessments import AssessmentParser
+from .config import MAX_CODE_LENGTH, MONACO_BASE
 from .execution import run_code
 from .languages import LANGUAGES
-from .problems import load_problem, markdown
+from .markdown_math import render_markdown
+from .store import count_attempts, database, latest, owned, start
 
 pages = Blueprint("pages", __name__)
 parser = AssessmentParser()
+
+
+@pages.before_request
+def identify_device():
+    if request.path.startswith("/static/"):
+        return
+    if request.method == "POST":
+        origin = request.headers.get("Origin")
+        if origin and urlsplit(origin).netloc != request.host:
+            return jsonify(error="Cross-origin requests are not allowed."), 403
+    ip = request.remote_addr or "unknown"
+    agent = request.headers.get("User-Agent", "")[:512]
+    fingerprint = hmac.new(current_app.secret_key.encode(), f"{ip}|{agent}".encode(), hashlib.sha256).hexdigest()
+    with database() as db:
+        device = db.execute("SELECT id FROM devices WHERE id=?", (session.get("device"),)).fetchone()
+        # Fingerprints restrict new attempts; they never grant access to private answers.
+        device_id = device["id"] if device else secrets.token_hex(24)
+        now = time.time()
+        db.execute("INSERT INTO devices VALUES (?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET last_seen=excluded.last_seen, ip=excluded.ip, user_agent=excluded.user_agent",
+                   (device_id, fingerprint, now, now, ip, agent))
+    session["device"] = device_id
+    session.permanent = True
 
 
 def find_assessment(assessment_id):
     return next((item for item in parser.load_all() if item["id"] == assessment_id), None)
 
 
+def public_assessment(item):
+    item = copy.deepcopy(item)
+    item["requires_passcode"] = bool(item.pop("passcode", ""))
+    for question in item["questions"]:
+        config = question.get("response_config", {})
+        config["test_count"] = len(config.pop("tests", []))
+    return item
+
+
+def public_attempt(attempt):
+    return {key: attempt[key] for key in ("id", "started", "deadline", "submitted", "answers", "score", "reason")}
+
+
 @pages.get("/")
 def index():
-    return render_template("index.html", assessments=parser.load_all())
+    return render_template("index.html", assessments=[public_assessment(item) for item in parser.load_all()])
+
+
+@pages.get("/api/assignments")
+def assignments():
+    result = {}
+    with database() as db:
+        for item in parser.load_all():
+            attempt = latest(db, session["device"], item["id"])
+            count = count_attempts(db, session["device"], item["id"])
+            result[item["id"]] = {"count": count, "active": bool(attempt and attempt["submitted"] is None),
+                                  "available": not item["number_of_attempts"] or count < item["number_of_attempts"]}
+    return jsonify(result)
 
 
 @pages.get("/assessment/<assessment_id>")
@@ -31,54 +82,89 @@ def assessment(assessment_id):
     item = find_assessment(assessment_id)
     if item is None:
         return "Assessment not found", 404
-    AssessmentAttempt(item)
-    config = {
-        "assessment": item,
-        "languages": LANGUAGES,
-        "monacoBase": MONACO_BASE,
-        "runUrl": url_for("pages.run"),
-        "testsUrl": url_for("pages.run_tests", assessment_id=assessment_id),
-        "submitUrl": url_for("pages.submit", assessment_id=assessment_id),
-        "stimuliHtml": {key: markdown.markdown(value, extensions=["fenced_code", "tables"])
-                        for key, value in item.get("stimuli", {}).items()},
-    }
+    item = public_assessment(item)
     for question in item["questions"]:
         for field in question.get("response_config", {}).get("fields", []):
-            field["question_html"] = markdown.markdown(field.get("question_text", ""))
+            field["question_html"] = render_markdown(field.get("question_text", ""))
+    config = {"assessment": item, "languages": LANGUAGES, "monacoBase": MONACO_BASE,
+              "runUrl": "/run", "testsUrl": f"/assessment/{assessment_id}/run-tests",
+              "attemptUrl": f"/api/assessment/{assessment_id}/attempt",
+              "stimuliHtml": {key: render_markdown(value)
+                              for key, value in item.get("stimuli", {}).items()}}
     return render_template("assessment.html", assessment=item, config=config, monaco_base=MONACO_BASE)
 
 
-@pages.post("/assessment/<assessment_id>/submit")
-def submit(assessment_id):
+@pages.post("/api/assessment/<assessment_id>/attempt")
+def begin_attempt(assessment_id):
     item = find_assessment(assessment_id)
     if item is None:
-        return jsonify({"error": "Assessment not found"}), 404
+        return jsonify(error="Assessment not found"), 404
     data = request.get_json(silent=True) or {}
-    submissions = BASE_DIR / "submissions"
-    submissions.mkdir(exist_ok=True)
-    submitted_at = datetime.now(timezone.utc).isoformat()
-    record = {"assessment_id": assessment_id, "assessment_title": item["title"],
-              "submitted_at": submitted_at, "answers": data.get("answers", {}),
-              "score": data.get("score", {})}
-    path = submissions / f"{assessment_id}_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}.json"
-    path.write_text(json.dumps(record, indent=2), encoding="utf-8")
-    return jsonify({"saved": True, "submitted_at": submitted_at})
+    if not isinstance(data, dict):
+        return jsonify(error="Invalid request"), 400
+    with database() as db:
+        previous = latest(db, session["device"], assessment_id)
+        if not (previous and previous["submitted"] is None) and item["passcode"] and data.get("passcode") != item["passcode"]:
+            return jsonify(error="Incorrect passcode"), 403
+        try:
+            attempt = start(db, session["device"], item)
+        except ValueError as error:
+            return jsonify(error=str(error)), 403
+    return jsonify(attempt=public_attempt(attempt), server_time=time.time())
 
 
-@pages.get("/export/submissions.csv")
-def export_submissions():
-    stream = io.StringIO()
-    writer = csv.writer(stream)
-    writer.writerow(["assessment_id", "assessment_title", "submitted_at", "score", "answers"])
-    for path in sorted((BASE_DIR / "submissions").glob("*.json")):
-        item = json.loads(path.read_text(encoding="utf-8"))
-        writer.writerow([item.get("assessment_id"), item.get("assessment_title"),
-                         item.get("submitted_at"), json.dumps(item.get("score", {})),
-                         json.dumps(item.get("answers", {}))])
-    response = make_response(stream.getvalue())
-    response.headers["Content-Type"] = "text/csv; charset=utf-8"
-    response.headers["Content-Disposition"] = "attachment; filename=submissions.csv"
-    return response
+def clean_answers(item, answers):
+    if not isinstance(answers, dict):
+        raise ValueError("Answers must be an object")
+    cleaned = {}
+    for question in item["questions"]:
+        c = question["response_config"]
+        if question["response_type"] == "code_editor":
+            value = answers.get(question["id"], {})
+            if not isinstance(value, dict):
+                raise ValueError("Invalid code answer")
+            cleaned[question["id"]] = {language: code for language, code in value.items()
+                                      if language in c["supported_languages"] and isinstance(code, str) and len(code) <= MAX_CODE_LENGTH}
+        elif question["response_type"] == "short_answer":
+            for index, field in enumerate(c.get("fields", [])):
+                key = f'{question["id"]}:{field.get("id", index)}'
+                value = answers.get(key, "")
+                if not isinstance(value, str) or len(value) > field["character_limit"]:
+                    raise ValueError("Invalid short answer")
+                cleaned[key] = value
+    return cleaned
+
+
+@pages.route("/api/attempt/<attempt_id>", methods=["GET", "POST"])
+def attempt_state(attempt_id):
+    with database() as db:
+        attempt = owned(db, attempt_id, session["device"])
+        if attempt is None:
+            return jsonify(error="Attempt not found"), 404
+        item = find_assessment(attempt["assessment"])
+        if request.method == "POST":
+            data = request.get_json(silent=True)
+            if not isinstance(data, dict):
+                return jsonify(error="Invalid request"), 400
+            if attempt["submitted"] is not None:
+                return jsonify(attempt=public_attempt(attempt), server_time=time.time())
+            if data.get("submit") and item["time_limit_seconds"] and not item["submittable_early"] and not (item["auto_submit_on_leave"] and data.get("reason") == "leave"):
+                return jsonify(error="Early submission is disabled"), 403
+            try:
+                answers = clean_answers(item, data.get("answers", attempt["answers"]))
+            except ValueError as error:
+                return jsonify(error=str(error)), 400
+            now = time.time()
+            score = attempt["score"]
+            for question_id, result in list(score.items()):
+                code = answers.get(question_id, {}).get(result["language"], "")
+                if hashlib.sha256(code.encode()).hexdigest() != result["code_sha256"]:
+                    del score[question_id]
+            db.execute("UPDATE attempts SET answers=?, updated=?, submitted=?, reason=?, score=? WHERE id=?",
+                       (json.dumps(answers), now, now if data.get("submit") else None,
+                        "leave" if data.get("reason") == "leave" and data.get("submit") else "submitted" if data.get("submit") else None, json.dumps(score), attempt_id))
+            attempt = owned(db, attempt_id, session["device"])
+    return jsonify(attempt=public_attempt(attempt), server_time=time.time())
 
 
 def validate_run_request(data):
@@ -87,11 +173,13 @@ def validate_run_request(data):
     language, code = data.get("language"), data.get("code")
     if not isinstance(language, str) or language not in LANGUAGES:
         return None, None, ("Unsupported language.", 400)
-    if not isinstance(code, str):
-        return None, None, ("Invalid code!", 400)
-    if len(code) > MAX_CODE_LENGTH:
-        return None, None, ("Code is too long!", 400)
+    if not isinstance(code, str) or len(code) > MAX_CODE_LENGTH:
+        return None, None, ("Invalid code or code is too long!", 400)
     return language, code, None
+
+
+def execution_allowed():
+    return request.remote_addr in ("127.0.0.1", "::1") or current_app.config["ALLOW_UNSAFE_REMOTE_EXECUTION"]
 
 
 def execute_for_response(language, code, input_text=""):
@@ -108,46 +196,128 @@ def execute_for_response(language, code, input_text=""):
 
 @pages.post("/run")
 def run():
-    language, code, error = validate_run_request(request.get_json(silent=True))
+    if not execution_allowed():
+        return jsonify(error="Remote execution requires an isolated runner."), 503
+    data = request.get_json(silent=True)
+    language, code, error = validate_run_request(data)
     if error:
-        return jsonify({"output": error[0]}), error[1]
-    return jsonify({"output": execute_for_response(language, code, request.json.get("input", ""))})
+        return jsonify(output=error[0]), error[1]
+    input_text = data.get("input", "")
+    if not isinstance(input_text, str) or len(input_text) > MAX_CODE_LENGTH:
+        return jsonify(error="Invalid input"), 400
+    return jsonify(output=execute_for_response(language, code, input_text))
 
 
 @pages.post("/assessment/<assessment_id>/run-tests")
 def run_tests(assessment_id):
+    if not execution_allowed():
+        return jsonify(error="Remote execution requires an isolated runner."), 503
     item = find_assessment(assessment_id)
-    data = request.get_json(silent=True) or {}
-    if item is None:
-        return jsonify({"error": "Assessment not found"}), 404
-    question = next((q for q in item["questions"] if q["id"] == data.get("question_id")), None)
-    if question is None or question["response_type"] != "code_editor":
-        return jsonify({"error": "Question not found"}), 404
+    data = request.get_json(silent=True)
     language, code, error = validate_run_request(data)
     if error:
-        return jsonify({"error": error[0]}), error[1]
-    config = question["response_config"]
-    if not config.get("runnable_tests"):
-        return jsonify({"error": "Tests are disabled for this question."}), 400
-    if language not in config["supported_languages"]:
-        return jsonify({"error": "Language is not enabled for this question."}), 400
+        return jsonify(error=error[0]), error[1]
+    if item is None:
+        return jsonify(error="Assessment not found"), 404
+    question = next((q for q in item["questions"] if q["id"] == data.get("question_id")), None)
+    if not question or question["response_type"] != "code_editor":
+        return jsonify(error="Question not found"), 404
+    c = question["response_config"]
+    if not c["runnable_tests"] or language not in c["supported_languages"]:
+        return jsonify(error="Tests or language disabled"), 403
+    with database() as db:
+        attempt = owned(db, data.get("attempt_id"), session["device"])
+        if not attempt or attempt["assessment"] != assessment_id or attempt["submitted"] is not None:
+            return jsonify(error="An active attempt is required"), 403
     results = []
-    for test in config.get("tests", []):
+    for test in c["tests"]:
         output = execute_for_response(language, code, test.get("input", ""))
-        actual = output.split("\n\nProcess finished with exit code ")[0].rstrip()
-        expected = str(test.get("expected_output", "")).rstrip()
-        passed = actual == expected
-        results.append({"name": test.get("name", "Test"), "passed": passed,
-                        "hidden": bool(test.get("hidden", False)),
-                        "output": "Passed" if passed else ("Hidden test failed" if test.get("hidden") else output),
-                        "expected": None if test.get("hidden") else expected})
-    return jsonify({"tests": results, "passed": sum(result["passed"] for result in results),
-                    "total": len(results)})
+        passed = output.rstrip() == str(test.get("expected_output", "")).rstrip()
+        results.append({"name": test.get("name", "Test"), "passed": passed, "hidden": bool(test.get("hidden")),
+                        "output": "Passed" if passed else "Hidden test failed" if test.get("hidden") else output,
+                        "expected": None if test.get("hidden") else test.get("expected_output")})
+    with database() as db:
+        attempt = owned(db, attempt["id"], session["device"])
+        if attempt["submitted"] is not None:
+            return jsonify(error="Attempt has ended"), 409
+        score = attempt["score"]
+        score[question["id"]] = {"passed": sum(r["passed"] for r in results), "total": len(results),
+                                  "code_sha256": hashlib.sha256(code.encode()).hexdigest(), "language": language}
+        answers = attempt["answers"]
+        answers.setdefault(question["id"], {})[language] = code
+        db.execute("UPDATE attempts SET score=?, answers=?, updated=? WHERE id=?",
+                   (json.dumps(score), json.dumps(answers), time.time(), attempt["id"]))
+    return jsonify(tests=results, passed=sum(r["passed"] for r in results), total=len(results), score=score)
 
 
 @pages.get("/editor")
 def editor():
-    editor_config = {"languages": LANGUAGES, "initialLanguage": "python",
-                     "monacoBase": MONACO_BASE, "runUrl": url_for("pages.run")}
-    return render_template("editor.html", problem_html=load_problem(), languages=LANGUAGES,
-                           monaco_base=MONACO_BASE, editor_config=editor_config)
+    # Kept addressable for development; deliberately absent from the student menu.
+    item = {"id": "standalone", "title": "Editor", "time_limit_seconds": 0,
+            "score_visibility": {"while_taking": False, "upon_completion": False}, "questions": []}
+    item["questions"] = [{"id": "editor", "response_type": "code_editor", "response_config": {
+        "supported_languages": list(LANGUAGES), "default_code": {k: v["default_code"] for k, v in LANGUAGES.items()},
+        "files": [], "runnable": True, "runnable_tests": False, "output": True, "allow_input": True,
+        "file_browser": True, "read_only": False, "intellisense": True}}]
+    config = {"assessment": item, "languages": LANGUAGES, "monacoBase": MONACO_BASE, "runUrl": "/run", "stimuliHtml": {}, "standalone": True}
+    return render_template("assessment.html", assessment=item, config=config, monaco_base=MONACO_BASE)
+
+
+@pages.post("/api/diagnostics")
+def check_code():
+    if not execution_allowed():
+        return jsonify(error="Remote diagnostics require an isolated runner."), 503
+    language, code, error = validate_run_request(request.get_json(silent=True))
+    if error:
+        return jsonify(error=error[0]), error[1]
+    from .interactive import diagnostics
+    try:
+        return jsonify(markers=diagnostics(language, code))
+    except subprocess.TimeoutExpired:
+        return jsonify(markers=[], message="Diagnostic check timed out")
+
+
+@pages.post("/api/terminal")
+def terminal_start():
+    if not execution_allowed():
+        return jsonify(error="Remote execution requires an isolated runner."), 503
+    language, code, error = validate_run_request(request.get_json(silent=True))
+    if error:
+        return jsonify(error=error[0]), error[1]
+    from .interactive import start_program
+    try:
+        return jsonify(id=start_program(session["device"], language, code))
+    except ValueError as error:
+        return jsonify(error=str(error)), 429
+
+
+@pages.route("/api/terminal/<terminal_id>", methods=["GET", "POST"])
+def terminal_io(terminal_id):
+    from .interactive import SESSIONS
+    program = SESSIONS.get(terminal_id)
+    if not program or program.owner != session["device"]:
+        return jsonify(error="Program not found"), 404
+    if request.method == "POST":
+        data = request.get_json(silent=True)
+        if not isinstance(data, dict):
+            return jsonify(error="Invalid request"), 400
+        if data.get("stop"):
+            program.stop()
+        elif data.get("eof"):
+            if program.process and program.process.stdin and not program.process.stdin.closed:
+                program.process.stdin.close()
+        else:
+            value = data.get("input")
+            if not isinstance(value, str) or len(value) > 4096:
+                return jsonify(error="Invalid input"), 400
+            if not program.process or program.done or program.process.stdin.closed:
+                return jsonify(error="Program is not accepting input"), 409
+            try:
+                program.append(value)
+                program.process.stdin.write(value)
+                program.process.stdin.flush()
+            except (OSError, ValueError):
+                return jsonify(error="Program has finished"), 409
+    with program.lock:
+        return jsonify(output=program.output, done=program.done,
+                       ready=bool(program.process and program.process.stdin and not program.process.stdin.closed and not program.done))

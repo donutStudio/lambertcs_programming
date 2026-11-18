@@ -7,7 +7,7 @@ import sys
 from .config import MAX_OUTPUT_LENGTH, TIMEOUT
 
 
-def execute(command, cwd, input_text=""):
+def execute(command, cwd, input_text="", timeout=TIMEOUT):
 
     return subprocess.run(
         command,
@@ -15,7 +15,7 @@ def execute(command, cwd, input_text=""):
         capture_output=True,
         text=True,
         errors="replace",
-        timeout=TIMEOUT,
+        timeout=timeout,
         input=input_text
     )
 
@@ -40,7 +40,7 @@ def run_code(language, code, input_text=""):
 
             compile_result = execute(
                 ["javac", "Main.java"],
-                workdir
+                workdir, timeout=20
             )
 
             if compile_result.returncode != 0:
@@ -57,7 +57,7 @@ def run_code(language, code, input_text=""):
 
             compile_result = execute(
                 ["g++", "-std=c++17", "main.cpp", "-o", "main"],
-                workdir
+                workdir, timeout=20
             )
 
             if compile_result.returncode != 0:
@@ -77,12 +77,11 @@ def run_code(language, code, input_text=""):
 
 
 def format_result(result, stage):
-    """Keep toolchain diagnostics intact and add a familiar process summary."""
+    """Return program output, adding a summary only when the process failed."""
     output = result.stdout + result.stderr
     if result.returncode == 0:
         if not output:
-            output = "(no output)\n"
-        summary = "Process finished with exit code 0."
+            output = "(no output)"
     else:
-        summary = f"{stage.capitalize()} finished with exit code {result.returncode}."
-    return (output.rstrip() + "\n\n" + summary)[:MAX_OUTPUT_LENGTH]
+        output = output.rstrip() + f"\n\n{stage.capitalize()} finished with exit code {result.returncode}."
+    return output[:MAX_OUTPUT_LENGTH]

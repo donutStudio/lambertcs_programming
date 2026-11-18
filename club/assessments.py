@@ -1,4 +1,4 @@
-"""Read assessment definitions and create the small live-attempt model."""
+"""Read and normalize server-owned assessment definitions."""
 import json
 from pathlib import Path
 
@@ -32,7 +32,8 @@ class AssessmentParser:
         data["stimuli"] = data.get("stimuli", {})
         for question in data.get("questions", []):
             question.setdefault("response_config", {})
-            if question["response_type"] == "code_editor":
+            response_type = question.get("response_type")
+            if response_type == "code_editor":
                 config = question["response_config"]
                 if not config.get("supported_languages"):
                     raise ValueError("code_editor requires supported_languages")
@@ -44,17 +45,14 @@ class AssessmentParser:
                 config.setdefault("default_code", {})
                 config.setdefault("files", [])
                 config.setdefault("tests", [])
-            elif question["response_type"] == "short_answer":
+            elif response_type == "short_answer":
                 for field in question["response_config"].get("fields", []):
                     field.setdefault("character_limit", 100)
                     field.setdefault("numeric_only", False)
                     field.setdefault("email", False)
+            elif response_type == "stimulus_only":
+                if question.get("stimulus") not in data["stimuli"]:
+                    raise ValueError("stimulus_only requires a valid stimulus key")
+            else:
+                raise ValueError(f"Unsupported response_type: {response_type}")
         return data
-
-
-class AssessmentAttempt:
-    """In-memory shape of one attempt; the browser persists this as local JSON."""
-
-    def __init__(self, assessment, state=None):
-        self.assessment = assessment
-        self.state = state or {"answers": {}, "started_at": None, "submitted_at": None}

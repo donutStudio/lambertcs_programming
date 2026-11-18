@@ -1,39 +1,201 @@
 {
   "id": "practice_programming",
-  "title": "Practice: Next Square",
-  "description": "Untimed practice with unlimited attempts. Run tests any time to see your score update.",
+  "title": "Introductory programming practice",
   "time_limit_seconds": 0,
+  "number_of_attempts": 0,
   "submittable_early": true,
   "auto_submit_on_leave": false,
-  "passcode": "",
-  "number_of_attempts": 0,
-  "score_visibility": {"while_taking": true, "upon_completion": true, "score_format": "fraction"},
-  "stimuli": {
-    "problem": "# Next Square\n\nRead an integer `n`. Print the smallest perfect square that is **greater than or equal to** `n`.\n\nExamples:\n\n| Input | Output |\n| --- | --- |\n| `10` | `16` |\n| `25` | `25` |\n| `1` | `1` |"
+  "score_visibility": {
+    "while_taking": true,
+    "upon_completion": true,
+    "score_format": "fraction"
   },
-  "questions": [{
-    "id": "next_square",
-    "title": "Find the next square",
-    "stimulus": "problem",
-    "response_type": "code_editor",
-    "points": 4,
-    "response_config": {
-      "supported_languages": ["python"],
-      "intellisense": true,
-      "runnable": true,
-      "runnable_tests": true,
-      "output": true,
-      "allow_input": true,
-      "file_browser": true,
-      "read_only": false,
-      "files": ["main.py"],
-      "default_code": {"python": "n = int(input())\n\n# Find the smallest integer whose square is at least n.\nroot = 0\nwhile root * root < n:\n    root += 1\n\nprint(root * root)"},
-      "tests": [
-        {"name": "Rounds up", "input": "10\n", "expected_output": "16"},
-        {"name": "Already a square", "input": "25\n", "expected_output": "25"},
-        {"name": "Smallest input", "input": "1\n", "expected_output": "1"},
-        {"name": "Hidden larger value", "input": "80\n", "expected_output": "81", "hidden": true}
-      ]
+  "stimuli": {
+    "instructions": "# Instructions\n\nThis is an untimed practice set with unlimited attempts. Complete five introductory programs in Python, Java, or C++.\n\nUse **Run** to try your program. Type input into the terminal and press Enter for each line. **EOF** closes input. **Run tests** checks the supplied examples and additional cases. Test results apply to the code you tested; run tests again after editing. Drag the pane dividers to resize your workspace. Use the question dropdown or Previous/Next to navigate.",
+    "greeting": "# Hello\n\nPrint `Hello, world!` on one line. No input is needed.\n\n### Example\n\nOutput:\n```text\nHello, world!\n```",
+    "sum": "# Add two numbers\n\nRead two integers, one per line. Print their sum.\n\n### Example\n\nInput:\n```text\n3\n4\n```\n\nOutput:\n```text\n7\n```",
+    "even": "# Even or odd\n\nRead an integer. Print `Even` if it is divisible by 2; otherwise print `Odd`.\n\n### Example\n\nInput:\n```text\n8\n```\n\nOutput:\n```text\nEven\n```",
+    "count": "# Count up\n\nRead a positive integer `n` (1–100). Print the integers from 1 through `n`, each on its own line.\n\n### Example\n\nInput:\n```text\n3\n```\n\nOutput:\n```text\n1\n2\n3\n```",
+    "total": "# Running total\n\nRead a positive integer `n`, followed by `n` integers, one per line. Print their sum.\n\n### Example\n\nInput:\n```text\n3\n2\n4\n6\n```\n\nOutput:\n```text\n12\n```"
+  },
+  "questions": [
+    {
+      "id": "instructions",
+      "response_type": "stimulus_only",
+      "stimulus": "instructions"
+    },
+    {
+      "id": "greeting",
+      "response_type": "code_editor",
+      "stimulus": "greeting",
+      "response_config": {
+        "supported_languages": [
+          "python",
+          "java",
+          "cpp"
+        ],
+        "default_code": {
+          "python": "# Write your program here.\n",
+          "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner in = new Scanner(System.in);\n        // Write your program here.\n    }\n}\n",
+          "cpp": "#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    // Write your program here.\n    return 0;\n}\n"
+        },
+        "tests": [
+          {
+            "name": "Test 1",
+            "input": "",
+            "expected_output": "Hello, world!",
+            "hidden": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "sum",
+      "response_type": "code_editor",
+      "stimulus": "sum",
+      "response_config": {
+        "supported_languages": [
+          "python",
+          "java",
+          "cpp"
+        ],
+        "default_code": {
+          "python": "# Write your program here.\n",
+          "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner in = new Scanner(System.in);\n        // Write your program here.\n    }\n}\n",
+          "cpp": "#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    // Write your program here.\n    return 0;\n}\n"
+        },
+        "tests": [
+          {
+            "name": "Test 1",
+            "input": "3\n4\n",
+            "expected_output": "7",
+            "hidden": false
+          },
+          {
+            "name": "Test 2",
+            "input": "-2\n5\n",
+            "expected_output": "3",
+            "hidden": true
+          },
+          {
+            "name": "Test 3",
+            "input": "0\n0\n",
+            "expected_output": "0",
+            "hidden": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "even",
+      "response_type": "code_editor",
+      "stimulus": "even",
+      "response_config": {
+        "supported_languages": [
+          "python",
+          "java",
+          "cpp"
+        ],
+        "default_code": {
+          "python": "# Write your program here.\n",
+          "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner in = new Scanner(System.in);\n        // Write your program here.\n    }\n}\n",
+          "cpp": "#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    // Write your program here.\n    return 0;\n}\n"
+        },
+        "tests": [
+          {
+            "name": "Test 1",
+            "input": "8\n",
+            "expected_output": "Even",
+            "hidden": false
+          },
+          {
+            "name": "Test 2",
+            "input": "7\n",
+            "expected_output": "Odd",
+            "hidden": true
+          },
+          {
+            "name": "Test 3",
+            "input": "0\n",
+            "expected_output": "Even",
+            "hidden": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "count",
+      "response_type": "code_editor",
+      "stimulus": "count",
+      "response_config": {
+        "supported_languages": [
+          "python",
+          "java",
+          "cpp"
+        ],
+        "default_code": {
+          "python": "# Write your program here.\n",
+          "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner in = new Scanner(System.in);\n        // Write your program here.\n    }\n}\n",
+          "cpp": "#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    // Write your program here.\n    return 0;\n}\n"
+        },
+        "tests": [
+          {
+            "name": "Test 1",
+            "input": "3\n",
+            "expected_output": "1\n2\n3",
+            "hidden": false
+          },
+          {
+            "name": "Test 2",
+            "input": "1\n",
+            "expected_output": "1",
+            "hidden": true
+          },
+          {
+            "name": "Test 3",
+            "input": "5\n",
+            "expected_output": "1\n2\n3\n4\n5",
+            "hidden": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "total",
+      "response_type": "code_editor",
+      "stimulus": "total",
+      "response_config": {
+        "supported_languages": [
+          "python",
+          "java",
+          "cpp"
+        ],
+        "default_code": {
+          "python": "# Write your program here.\n",
+          "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner in = new Scanner(System.in);\n        // Write your program here.\n    }\n}\n",
+          "cpp": "#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    // Write your program here.\n    return 0;\n}\n"
+        },
+        "tests": [
+          {
+            "name": "Test 1",
+            "input": "3\n2\n4\n6\n",
+            "expected_output": "12",
+            "hidden": false
+          },
+          {
+            "name": "Test 2",
+            "input": "1\n-5\n",
+            "expected_output": "-5",
+            "hidden": true
+          },
+          {
+            "name": "Test 3",
+            "input": "4\n0\n1\n-1\n10\n",
+            "expected_output": "10",
+            "hidden": true
+          }
+        ]
+      }
     }
-  }]
+  ]
 }
