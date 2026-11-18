@@ -1,38 +1,12 @@
-
-const MONACO_BASE =
-    "https://cdn.jsdelivr.net/npm/monaco-editor@0.52.0/min/";
-
+// Python supplies language data and routes; JavaScript connects the browser editor.
+const config = JSON.parse(document.getElementById("editor-config").textContent);
+const MONACO_BASE = config.monacoBase;
 const languageSelect = document.getElementById("language");
 const runButton = document.getElementById("run-button");
 const output = document.getElementById("output");
-
-const defaultCode = {
-    python: 
-`print("Hello, world!")`,
-
-    java:
-`public class Main {
-    public static void main(String[] args) {
-        System.out.println("Hello, world!");
-    }
-}`,
-
-    cpp:
-`#include <iostream>
-int main() {
-    std::cout << "Hello, world!" << std::endl;
-    return 0;
-}`
-};
-
-// stores language saved code
-const savedCode = { ...defaultCode };
-
-const monacoLanguages = {
-    python: "python",
-    java: "java",
-    cpp: "cpp"
-};
+const savedCode = Object.fromEntries(
+    Object.entries(config.languages).map(([key, language]) => [key, language.default_code])
+);
 
 window.MonacoEnvironment = {
     getWorkerUrl: function () {
@@ -64,8 +38,8 @@ require(["vs/editor/editor.main"], function () {
     const editor = monaco.editor.create(
         document.getElementById("editor"),
         {
-            value: savedCode.python,
-            language: "python",
+            value: savedCode[config.initialLanguage],
+            language: config.initialLanguage,
 
             theme: "vs-dark",
             automaticLayout: true,
@@ -85,38 +59,17 @@ require(["vs/editor/editor.main"], function () {
         }
     );
 
+    runButton.disabled = false;
+    document.getElementById("reset-button").disabled = false;
+
     document.getElementById("reset-button").addEventListener("click", function () {
         const language = languageSelect.value;
-        const code = defaultCode[language];
+        const code = config.languages[language].default_code;
         editor.setValue(code);
         savedCode[language] = code;
     });
 
-    // no full language server so just like hardcoded suggestions and shit
-    const suggestions = {
-        python: [
-            "print", "len", "range", "enumerate",
-            "list", "dict", "set", "sum",
-            "math", "random", "collections",
-            "itertools", "heapq", "bisect"
-        ],
-
-        java: [
-            "System.out.println", "System.out.print",
-            "String", "Math", "Arrays",
-            "ArrayList", "HashMap", "HashSet",
-            "Scanner", "Collections", "PriorityQueue"
-        ],
-
-        cpp: [
-            "cout", "cin", "vector", "string",
-            "map", "unordered_map", "set",
-            "sort", "priority_queue", "queue",
-            "stack", "algorithm"
-        ]
-    };
-
-    for (const [language, words] of Object.entries(suggestions)) {
+    for (const [language, settings] of Object.entries(config.languages)) {
         monaco.languages.registerCompletionItemProvider(language, {
             provideCompletionItems: function (model, position) {
                 const word = model.getWordUntilPosition(position);
@@ -129,7 +82,7 @@ require(["vs/editor/editor.main"], function () {
                 };
 
                 return {
-                    suggestions: words.map((name) => ({
+                    suggestions: settings.suggestions.map((name) => ({
                         label: name,
                         kind: monaco.languages.CompletionItemKind.Text,
                         insertText: name,
@@ -146,7 +99,7 @@ require(["vs/editor/editor.main"], function () {
 
         monaco.editor.setModelLanguage(
             editor.getModel(),
-            monacoLanguages[language]
+            language
         );
 
         editor.setValue(savedCode[language]);
@@ -158,6 +111,7 @@ require(["vs/editor/editor.main"], function () {
     });
 
     async function runCode() {
+        if (runButton.disabled) return;
         const language = languageSelect.value;
         const code = editor.getValue();
 
@@ -166,7 +120,7 @@ require(["vs/editor/editor.main"], function () {
         output.textContent = "Running code...";
 
         try {
-            const response = await fetch("/run", {
+            const response = await fetch(config.runUrl, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
