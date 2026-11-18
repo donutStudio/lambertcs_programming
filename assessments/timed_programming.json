@@ -1,0 +1,39 @@
+{
+  "id": "timed_programming",
+  "title": "Assessment: Next Square",
+  "description": "A 10-minute, single-attempt programming assessment with live test-case scoring.",
+  "time_limit_seconds": 600,
+  "submittable_early": true,
+  "auto_submit_on_leave": false,
+  "passcode": "",
+  "number_of_attempts": 1,
+  "score_visibility": {"while_taking": true, "upon_completion": true, "score_format": "percent"},
+  "stimuli": {
+    "problem": "# Next Square\n\nRead an integer `n`. Print the smallest perfect square greater than or equal to `n`.\n\nYour program should handle values from 1 through 1,000,000."
+  },
+  "questions": [{
+    "id": "next_square",
+    "title": "Implement the solution",
+    "stimulus": "problem",
+    "response_type": "code_editor",
+    "points": 4,
+    "response_config": {
+      "supported_languages": ["python"],
+      "intellisense": true,
+      "runnable": true,
+      "runnable_tests": true,
+      "output": true,
+      "allow_input": true,
+      "file_browser": true,
+      "read_only": false,
+      "files": ["main.py"],
+      "default_code": {"python": "n = int(input())\n\n# TODO: Find the smallest perfect square >= n.\nprint(0)"},
+      "tests": [
+        {"name": "Rounds up", "input": "10\n", "expected_output": "16"},
+        {"name": "Exact square", "input": "144\n", "expected_output": "144"},
+        {"name": "Large value", "input": "999999\n", "expected_output": "1000000"},
+        {"name": "Hidden boundary", "input": "1000000\n", "expected_output": "1000000", "hidden": true}
+      ]
+    }
+  }]
+}

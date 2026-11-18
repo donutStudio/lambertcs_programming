@@ -1,0 +1,39 @@
+{
+  "id": "practice_programming",
+  "title": "Practice: Next Square",
+  "description": "Untimed practice with unlimited attempts. Run tests any time to see your score update.",
+  "time_limit_seconds": 0,
+  "submittable_early": true,
+  "auto_submit_on_leave": false,
+  "passcode": "",
+  "number_of_attempts": 0,
+  "score_visibility": {"while_taking": true, "upon_completion": true, "score_format": "fraction"},
+  "stimuli": {
+    "problem": "# Next Square\n\nRead an integer `n`. Print the smallest perfect square that is **greater than or equal to** `n`.\n\nExamples:\n\n| Input | Output |\n| --- | --- |\n| `10` | `16` |\n| `25` | `25` |\n| `1` | `1` |"
+  },
+  "questions": [{
+    "id": "next_square",
+    "title": "Find the next square",
+    "stimulus": "problem",
+    "response_type": "code_editor",
+    "points": 4,
+    "response_config": {
+      "supported_languages": ["python"],
+      "intellisense": true,
+      "runnable": true,
+      "runnable_tests": true,
+      "output": true,
+      "allow_input": true,
+      "file_browser": true,
+      "read_only": false,
+      "files": ["main.py"],
+      "default_code": {"python": "n = int(input())\n\n# Find the smallest integer whose square is at least n.\nroot = 0\nwhile root * root < n:\n    root += 1\n\nprint(root * root)"},
+      "tests": [
+        {"name": "Rounds up", "input": "10\n", "expected_output": "16"},
+        {"name": "Already a square", "input": "25\n", "expected_output": "25"},
+        {"name": "Smallest input", "input": "1\n", "expected_output": "1"},
+        {"name": "Hidden larger value", "input": "80\n", "expected_output": "81", "hidden": true}
+      ]
+    }
+  }]
+}

@@ -11,8 +11,8 @@ python -m pip install -r requirements.txt
 python app.py
 ```
 
-Open http://127.0.0.1:5000/ for the placeholder assessments page, then click
-**Open code editor**. The editor is also available at `/editor`.
+Open http://127.0.0.1:5000/ to choose an assessment. Each assessment presents its
+questions in the existing editor interface.
 Java needs `javac` and `java` on PATH; C++ needs `g++`. Monaco loads from its
 existing CDN and requires internet access.
 

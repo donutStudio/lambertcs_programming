@@ -7,7 +7,8 @@ import sys
 from .config import MAX_OUTPUT_LENGTH, TIMEOUT
 
 
-def execute(command, cwd):
+def execute(command, cwd, input_text=""):
+
     return subprocess.run(
         command,
         cwd=cwd,
@@ -15,11 +16,12 @@ def execute(command, cwd):
         text=True,
         errors="replace",
         timeout=TIMEOUT,
-        stdin=subprocess.DEVNULL
+        input=input_text
     )
 
 
-def run_code(language, code):
+def run_code(language, code, input_text=""):
+
     with TemporaryDirectory() as temp_dir:
         workdir = Path(temp_dir)
 
@@ -29,7 +31,7 @@ def run_code(language, code):
 
             result = execute(
                 [sys.executable, "-I", str(source)],
-                workdir
+                workdir, input_text
             )
 
         elif language == "java":
@@ -42,11 +44,11 @@ def run_code(language, code):
             )
 
             if compile_result.returncode != 0:
-                return (compile_result.stdout + compile_result.stderr)[:MAX_OUTPUT_LENGTH]
+                return format_result(compile_result, "compile")
 
             result = execute(
                 ["java", "-cp", str(workdir), "Main"],
-                workdir
+                workdir, input_text
             )
 
         elif language == "cpp":
@@ -59,23 +61,28 @@ def run_code(language, code):
             )
 
             if compile_result.returncode != 0:
-                return (compile_result.stdout + compile_result.stderr)[:MAX_OUTPUT_LENGTH]
+                return format_result(compile_result, "compile")
 
             result = execute(
                 [str(workdir / ("main.exe" if sys.platform == "win32" else "main"))],
-                workdir
+                workdir, input_text
             )
 
         else:
             return "Unsupported language."
 
-        output = result.stdout + result.stderr
+        return format_result(result, "run")
 
+
+
+
+def format_result(result, stage):
+    """Keep toolchain diagnostics intact and add a familiar process summary."""
+    output = result.stdout + result.stderr
+    if result.returncode == 0:
         if not output:
-            if result.returncode == 0:
-                return ""
-            return f"Program exited with code {result.returncode}."
-
-        return output[:MAX_OUTPUT_LENGTH]
-
-
+            output = "(no output)\n"
+        summary = "Process finished with exit code 0."
+    else:
+        summary = f"{stage.capitalize()} finished with exit code {result.returncode}."
+    return (output.rstrip() + "\n\n" + summary)[:MAX_OUTPUT_LENGTH]

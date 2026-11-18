@@ -1,16 +1,14 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lambert CS assessments</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body class="home-page">
-    <main class="home-card">
-        <h1>Programming assessments</h1>
-        <p>Computer science club practice and tests.</p>
-        <a class="button" href="{{ url_for('pages.editor') }}">Open code editor</a>
-    </main>
-</body>
-</html>
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Programming assessments</title><link rel="stylesheet" href="{{ url_for('static',filename='style.css') }}"></head>
+<body class="home-page"><main class="home-card">
+  <div class="eyebrow">CS CLUB · ASSESSMENTS</div><h1>Programming assessments</h1>
+  <p class="home-intro">Choose an assessment below. Your work is saved in this browser as you go.</p>
+  <ul class="assessment-list">{% for assessment in assessments %}<li data-assessment-id="{{ assessment.id }}" data-limit="{{ assessment.number_of_attempts }}">
+    <div><h2>{{ assessment.title }}</h2><p>{{ assessment.description }}</p><div class="assessment-meta">
+      <span>{% if assessment.time_limit_seconds %}{{ (assessment.time_limit_seconds // 60) }} min{% else %}Untimed{% endif %}</span>
+      <span>{% if assessment.number_of_attempts == 0 %}Unlimited attempts{% else %}{{ assessment.number_of_attempts }} attempt{% if assessment.number_of_attempts != 1 %}s{% endif %}{% endif %}</span>
+    </div></div><div class="assessment-action"><span class="attempt-status">Not started</span><a class="button" href="{{ url_for('pages.assessment', assessment_id=assessment.id) }}" data-title="{{ assessment.title }}">Start</a></div>
+  </li>{% else %}<li>No assessments are configured yet.</li>{% endfor %}</ul>
+  <footer class="home-footer"><a href="{{ url_for('pages.export_submissions') }}">Export submitted work (CSV)</a><span>Submissions are saved on this computer.</span></footer>
+</main><script id="home-config" type="application/json">{{ assessments|tojson }}</script><script src="{{ url_for('static',filename='home.js') }}"></script></body></html>
