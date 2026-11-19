@@ -1,6 +1,6 @@
 # Practice Streak *(Problem 7)*
 
-Teja is finally practicing consistently! A list `days` records whether he practiced on each day, in order, where $1$ means he practiced and $0$ means he did not. Write a program that prints the greatest number of consecutive days on which he practiced. A day marked $0$ ends a streak. If he did not practice on any day, the program should print `0`.
+Teja is practicing programming. A list `days` records whether he practiced on each day, in order, where $1$ means he practiced and $0$ means he did not. Write a program that prints the greatest number of consecutive days on which he practiced. A day marked $0$ ends a streak. If he did not practice on any day, the program should print `0`.
 
 **Input Format**
 <br>

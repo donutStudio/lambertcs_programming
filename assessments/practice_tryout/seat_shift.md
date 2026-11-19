@@ -1,6 +1,6 @@
 # Seat Shift *(Problem 6)*
 
-Octavius wants to change the seating order for a club meeting. A list `seats` contains the student IDs in their current order. During one shift, the last student in the list moves to the front, and everyone else moves one position to the right. Write a program that prints the seating order after exactly `shift` shifts. Print the IDs on one line separated by single spaces. If `shift` is $0$, print the original order.
+A teacher wants to change the seating order for their class. A list `seats` contains the student IDs in their current order. During one shift, the last student in the list moves to the front, and everyone else moves one position to the right. Write a program that prints the seating order after exactly `shift` shifts. Print the IDs on one line separated by single spaces. If `shift` is $0$, print the original order.
 
 **Input Format**
 <br>

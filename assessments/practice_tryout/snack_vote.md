@@ -1,6 +1,6 @@
-# Snack Vote *(Problem 8)*
+# Movie Vote *(Problem 8)*
 
-The club is voting on a snack, and each snack is represented by a lowercase English letter. An input string `votes` contains one letter for each member's vote. Write a program that prints the letter with the most votes. If two or more letters have the same greatest number of votes, print the one that comes first in the alphabet. Only letters that received at least one vote can win.
+A group is voting on a Movie, and each Movie is represented by a lowercase English letter. An input string `votes` contains one letter for each member's vote. Write a program that prints the letter with the most votes. If two or more letters have the same greatest number of votes, print the one that comes first in the alphabet. Only letters that received at least one vote can win.
 
 **Input Format**
 <br>

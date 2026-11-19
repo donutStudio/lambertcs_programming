@@ -1,6 +1,6 @@
 # Club Initials *(Problem 5)*
 
-Samzua-chan is making a short name for a new club. From an input string `name` containing the words in the club's name, write a program that prints the first letter of each word, in the same order the words appear. Print these letters together with no spaces between them.
+Samvid is making a short name for a new club. From an input string `name` containing the words in the club's name, write a program that prints the first letter of each word, in the same order the words appear. Print these letters together with no spaces between them.
 
 **Input Format**
 <br>
