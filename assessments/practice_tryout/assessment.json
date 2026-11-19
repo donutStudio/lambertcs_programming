@@ -1,0 +1,376 @@
+{
+  "id": "practice_tryout",
+  "title": "Lambert Competitive Programming Practice",
+  "time_limit_seconds": 0,
+  "number_of_attempts": 0,
+  "passcode": "",
+  "submittable_early": true,
+  "auto_submit_on_leave": false,
+  "score_visibility": {
+    "while_taking": true,
+    "upon_completion": true,
+    "score_format": "integer"
+  },
+  "stimuli": {
+    "instructions": {
+      "$file": "instructions.md"
+    },
+    "candle_split": {
+      "$file": "candle_split.md"
+    },
+    "digit_difference": {
+      "$file": "digit_difference.md"
+    },
+    "vowel_check": {
+      "$file": "vowel_check.md"
+    },
+    "next_squares": {
+      "$file": "next_squares.md"
+    },
+    "club_initials": {
+      "$file": "club_initials.md"
+    },
+    "seat_shift": {
+      "$file": "seat_shift.md"
+    },
+    "practice_streak": {
+      "$file": "practice_streak.md"
+    },
+    "snack_vote": {
+      "$file": "snack_vote.md"
+    },
+    "merged_line": {
+      "$file": "merged_line.md"
+    },
+    "reading_goal": {
+      "$file": "reading_goal.md"
+    }
+  },
+  "questions": [
+    {
+      "id": "student",
+      "response_type": "short_answer",
+      "response_config": {
+        "fields": [
+          {
+            "id": "full_name",
+            "question_text": "Full name",
+            "character_limit": 120,
+            "required": true
+          },
+          {
+            "id": "email",
+            "question_text": "Email",
+            "character_limit": 200,
+            "email": true,
+            "required": true
+          },
+          {
+            "id": "student_id",
+            "question_text": "Student ID",
+            "numeric_only": true,
+            "character_limit": 30,
+            "required": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "instructions",
+      "response_type": "stimulus_only",
+      "stimulus": "instructions"
+    },
+    {
+      "id": "candle_split",
+      "response_type": "code_editor",
+      "stimulus": "candle_split",
+      "response_config": {
+        "default_code": {
+          "python": {
+            "$file": "starter_code/candle_split.py"
+          },
+          "java": {
+            "$file": "starter_code/candle_split.java"
+          },
+          "cpp": {
+            "$file": "starter_code/candle_split.cpp"
+          }
+        },
+        "grader": {
+          "code": {
+            "$file": "tests/candle_split.py"
+          },
+          "assets": {
+            "cases": {
+              "$file": "tests/candle_split.txt"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "digit_difference",
+      "response_type": "code_editor",
+      "stimulus": "digit_difference",
+      "response_config": {
+        "default_code": {
+          "python": {
+            "$file": "starter_code/digit_difference.py"
+          },
+          "java": {
+            "$file": "starter_code/digit_difference.java"
+          },
+          "cpp": {
+            "$file": "starter_code/digit_difference.cpp"
+          }
+        },
+        "grader": {
+          "code": {
+            "$file": "tests/digit_difference.py"
+          },
+          "assets": {
+            "cases": {
+              "$file": "tests/digit_difference.txt"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "vowel_check",
+      "response_type": "code_editor",
+      "stimulus": "vowel_check",
+      "response_config": {
+        "default_code": {
+          "python": {
+            "$file": "starter_code/vowel_check.py"
+          },
+          "java": {
+            "$file": "starter_code/vowel_check.java"
+          },
+          "cpp": {
+            "$file": "starter_code/vowel_check.cpp"
+          }
+        },
+        "grader": {
+          "code": {
+            "$file": "tests/vowel_check.py"
+          },
+          "assets": {
+            "cases": {
+              "$file": "tests/vowel_check.txt"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "next_squares",
+      "response_type": "code_editor",
+      "stimulus": "next_squares",
+      "response_config": {
+        "default_code": {
+          "python": {
+            "$file": "starter_code/next_squares.py"
+          },
+          "java": {
+            "$file": "starter_code/next_squares.java"
+          },
+          "cpp": {
+            "$file": "starter_code/next_squares.cpp"
+          }
+        },
+        "grader": {
+          "code": {
+            "$file": "tests/next_squares.py"
+          },
+          "assets": {
+            "cases": {
+              "$file": "tests/next_squares.txt"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "club_initials",
+      "response_type": "code_editor",
+      "stimulus": "club_initials",
+      "response_config": {
+        "default_code": {
+          "python": {
+            "$file": "starter_code/club_initials.py"
+          },
+          "java": {
+            "$file": "starter_code/club_initials.java"
+          },
+          "cpp": {
+            "$file": "starter_code/club_initials.cpp"
+          }
+        },
+        "grader": {
+          "code": {
+            "$file": "tests/club_initials.py"
+          },
+          "assets": {
+            "cases": {
+              "$file": "tests/club_initials.txt"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "seat_shift",
+      "response_type": "code_editor",
+      "stimulus": "seat_shift",
+      "response_config": {
+        "default_code": {
+          "python": {
+            "$file": "starter_code/seat_shift.py"
+          },
+          "java": {
+            "$file": "starter_code/seat_shift.java"
+          },
+          "cpp": {
+            "$file": "starter_code/seat_shift.cpp"
+          }
+        },
+        "grader": {
+          "code": {
+            "$file": "tests/seat_shift.py"
+          },
+          "assets": {
+            "cases": {
+              "$file": "tests/seat_shift.txt"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "practice_streak",
+      "response_type": "code_editor",
+      "stimulus": "practice_streak",
+      "response_config": {
+        "default_code": {
+          "python": {
+            "$file": "starter_code/practice_streak.py"
+          },
+          "java": {
+            "$file": "starter_code/practice_streak.java"
+          },
+          "cpp": {
+            "$file": "starter_code/practice_streak.cpp"
+          }
+        },
+        "grader": {
+          "code": {
+            "$file": "tests/practice_streak.py"
+          },
+          "assets": {
+            "cases": {
+              "$file": "tests/practice_streak.txt"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "snack_vote",
+      "response_type": "code_editor",
+      "stimulus": "snack_vote",
+      "response_config": {
+        "default_code": {
+          "python": {
+            "$file": "starter_code/snack_vote.py"
+          },
+          "java": {
+            "$file": "starter_code/snack_vote.java"
+          },
+          "cpp": {
+            "$file": "starter_code/snack_vote.cpp"
+          }
+        },
+        "grader": {
+          "code": {
+            "$file": "tests/snack_vote.py"
+          },
+          "assets": {
+            "cases": {
+              "$file": "tests/snack_vote.txt"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "merged_line",
+      "response_type": "code_editor",
+      "stimulus": "merged_line",
+      "response_config": {
+        "default_code": {
+          "python": {
+            "$file": "starter_code/merged_line.py"
+          },
+          "java": {
+            "$file": "starter_code/merged_line.java"
+          },
+          "cpp": {
+            "$file": "starter_code/merged_line.cpp"
+          }
+        },
+        "grader": {
+          "code": {
+            "$file": "tests/merged_line.py"
+          },
+          "assets": {
+            "cases": {
+              "$file": "tests/merged_line.txt"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "reading_goal",
+      "response_type": "code_editor",
+      "stimulus": "reading_goal",
+      "response_config": {
+        "default_code": {
+          "python": {
+            "$file": "starter_code/reading_goal.py"
+          },
+          "java": {
+            "$file": "starter_code/reading_goal.java"
+          },
+          "cpp": {
+            "$file": "starter_code/reading_goal.cpp"
+          }
+        },
+        "grader": {
+          "code": {
+            "$file": "tests/reading_goal.py"
+          },
+          "assets": {
+            "cases": {
+              "$file": "tests/reading_goal.txt"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "response_defaults": {
+    "code_editor": {
+      "supported_languages": [
+        "python",
+        "java",
+        "cpp"
+      ],
+      "grader": {
+        "max_score": 100
+      }
+    }
+  }
+}

@@ -1,8 +1,8 @@
 {
   "id": "tryout_test",
   "title": "Lambert Competitive Programming Tryout",
-  "time_limit_seconds": 1800,
-  "number_of_attempts": 0,
+  "time_limit_seconds": 0,
+  "number_of_attempts": 1,
   "passcode": "",
   "submittable_early": true,
   "auto_submit_on_leave": false,

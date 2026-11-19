@@ -39,10 +39,10 @@ class AssessmentFormatTests(unittest.TestCase):
 
     def test_tryout_structure(self):
         from club.config import BASE_DIR
-        item=AssessmentParser().load('tryout_test')
+        item=AssessmentParser(BASE_DIR/'private_assessments').load('tryout_test')
         self.assertEqual([q['id'] for q in item['questions']],['student','instructions','odd_ones_out','swapped_spelling','academic_comeback'])
         self.assertEqual(len(item['questions'][0]['response_config']['fields']),3)
-        root=BASE_DIR/'assessments'/'tryout_test'
+        root=BASE_DIR/'private_assessments'/'tryout_test'
         self.assertEqual(len(list((root/'tests').glob('*.py'))),3)
         self.assertEqual(len(list((root/'tests').glob('*.txt'))),3)
         self.assertEqual(sum(q['response_config']['score_max'] for q in item['questions']),300)

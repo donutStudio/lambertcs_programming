@@ -14,21 +14,27 @@ ZIPs reject traversal/absolute paths, duplicate names, over 1,000 entries, or
 more than 64 MiB uncompressed content. These are server-admin artifacts, not
 student uploads.
 
-The current tryout is:
+The active practice bundle is:
 
 ```text
-assessments/tryout_test/
+assessments/practice_programming/
   assessment.json
   instructions.md
-  odd_ones_out.md
-  swapped_spelling.md
-  academic_comeback.md
-  starter_code/          # three .py, three .java, three .cpp files
-  tests/                # three Python graders and three case-data .txt files
+  candle_split.md        # plus nine more problem statements
+  starter_code/          # ten .py, ten .java, ten .cpp files
+  tests/                 # ten Python graders and ten case-data .txt files
 ```
 
 The first question collects full name/email/student ID, then instructions, then
-Odd Ones Out, Swapped Spelling, Academic Comeback. Question IDs stay stable when
+ten practice problems. Practice is untimed, has no passcode, and allows unlimited
+attempts (`time_limit_seconds: 0`, `passcode: ""`, `number_of_attempts: 0`).
+The original tryout is preserved in `private_assessments/tryout_test/`, outside
+the loader's assessment directory, with its existing settings intact. To make it
+available on tryout day, move that entire folder into `assessments/` and add
+`"tryout_test"` to `assessments/assignments.json` after reviewing its settings.
+The private folder is a local archive, not a student-facing assessment or static
+asset; keep it out of any public source distribution.
+Question IDs stay stable when
 reordering. Common widget settings can live in `response_defaults`, keyed by
 response type. Each question overrides those settings; nested configuration maps
 merge one level (e.g. grader code/assets override its shared maximum).

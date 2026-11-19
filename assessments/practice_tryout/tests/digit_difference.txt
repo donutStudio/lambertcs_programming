@@ -1,0 +1,62 @@
+[
+  {
+    "input": "5824\n",
+    "expected": "6",
+    "large": false,
+    "hidden": false
+  },
+  {
+    "input": "7003\n",
+    "expected": "7",
+    "large": false,
+    "hidden": false
+  },
+  {
+    "input": "9\n",
+    "expected": "0",
+    "large": false,
+    "hidden": false
+  },
+  {
+    "input": "1\n",
+    "expected": "0",
+    "large": false,
+    "hidden": true
+  },
+  {
+    "input": "111111111\n",
+    "expected": "0",
+    "large": false,
+    "hidden": true
+  },
+  {
+    "input": "123456789\n",
+    "expected": "8",
+    "large": false,
+    "hidden": true
+  },
+  {
+    "input": "1000000000\n",
+    "expected": "1",
+    "large": false,
+    "hidden": true
+  },
+  {
+    "input": "909090909\n",
+    "expected": "9",
+    "large": false,
+    "hidden": true
+  },
+  {
+    "input": "222222223\n",
+    "expected": "1",
+    "large": false,
+    "hidden": true
+  },
+  {
+    "input": "8642\n",
+    "expected": "6",
+    "large": false,
+    "hidden": true
+  }
+]

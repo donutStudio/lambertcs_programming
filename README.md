@@ -15,9 +15,10 @@ python app.py
 Open http://127.0.0.1:5000/. Monaco loads from its CDN. Java requires `javac`
 and `java`; C++ requires `g++`. Use Python, Java, or C++ for either sample set.
 
-The menu contains the Lambert Competitive Programming Tryout: student details,
-instructions, then Odd Ones Out, Swapped Spelling, and Academic Comeback.
-It has a 30-minute time limit. `/editor` remains available by direct URL for
+The menu contains Lambert Competitive Programming Practice: student details,
+instructions, then ten problems ordered from easier to harder. It is untimed,
+requires no password, and allows unlimited attempts. The original tryout is
+preserved outside the active assessments directory in `private_assessments/tryout_test/`. `/editor` remains available by direct URL for
 development, without a stimulus or menu link.
 
 ## Workspace
@@ -82,7 +83,7 @@ run, not a separate final automatic grading pass.
 
 See [ASSESSMENT_FORMAT.md](ASSESSMENT_FORMAT.md) for JSON/folder/ZIP bundles,
 text-file references, shared widget defaults, custom Python graders, score hooks,
-and the converted tryout layout. The active menu follows assignments.json and contains only the actual tryout.
+and the practice bundle layout. The active menu follows assignments.json and contains only practice.
 
 The old fixed test-case configuration has been replaced by trusted server-authored
 graders. Their source and assets never go into the public page configuration.
