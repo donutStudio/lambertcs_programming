@@ -47,23 +47,28 @@ function persist(extra = {}) {
 function formatScore() {
     let passed = 0, total = 0;
     assessment.questions.forEach(q => {
-        total += q.response_config?.test_count || 0;
-        passed += state.score[q.id]?.passed || 0;
+        total += state.score[q.id]?.maximum ?? q.response_config?.score_max ?? 0;
+        passed += state.score[q.id]?.earned || 0;
     });
+    if (state.score._assessment) { passed = state.score._assessment.earned; total = state.score._assessment.maximum; }
     const format = assessment.score_visibility.score_format;
     return format === "percent" ? `${total ? Math.round(passed / total * 100) : 0}%` : format === "integer" ? String(passed) : `${passed}/${total}`;
 }
 function updateScore() {
     const score = document.getElementById("score-display");
     score.hidden = !assessment.score_visibility.while_taking || Boolean(state.submitted);
-    score.textContent = `Tests ${formatScore()}`;
-    score.title = "Results for the current code from tests run on the server";
+    score.textContent = `Score: ${formatScore()}`;
+    score.title = "Score awarded by the assessment";
 }
 function buildNavigation() {
     assessment.questions.forEach((q, i) => questionSelect.add(new Option(`Question ${i + 1}/${assessment.questions.length}`, i)));
     questionSelect.addEventListener("change", () => showQuestion(Number(questionSelect.value)));
 }
-function splitter(handle, getValue, apply, orientation = "vertical") {
+function splitter(handle, getValue, applyValue, orientation = "vertical") {
+    const key = `pane-size:${handle.getAttribute("aria-label")}:${matchMedia("(max-width:580px)").matches ? "small" : "wide"}`;
+    const apply = value => { applyValue(value); localStorage.setItem(key, String(value)); };
+    const saved = Number(localStorage.getItem(key));
+    if (saved > 0 && saved < 1) { applyValue(saved); handle.setAttribute("aria-valuenow", String(Math.round(saved * 100))); }
     handle.tabIndex = 0;
     handle.setAttribute("role", "separator");
     handle.setAttribute("aria-orientation", orientation);
@@ -118,7 +123,7 @@ function buildQuestion(question, index) {
         const hint = document.createElement("span"); hint.textContent = "Alt + ← / →";
         const next = document.createElement("button"); next.textContent = index === assessment.questions.length - 1 ? "Finish" : "Next";
         next.onclick = () => index < assessment.questions.length - 1 ? showQuestion(index + 1) : submitAssessment();
-        footer.append(previous, hint, next); card.append(footer);
+        footer.append(hint, previous, next); card.append(footer);
     }
     return card;
 }
@@ -129,7 +134,7 @@ function renderShortAnswer(question, host) {
         const wrap = document.createElement("label"); wrap.className = "short-answer-field";
         const title = document.createElement("div"); title.className = "field-prompt"; title.innerHTML = field.question_html || field.question_text || "";
         const input = document.createElement("input"); input.type = field.email ? "email" : "text";
-        input.maxLength = field.character_limit || 100; input.value = state.answers[id] || "";
+        input.required = Boolean(field.required); input.maxLength = field.character_limit || 100; input.value = state.answers[id] || "";
         if (field.numeric_only) { input.inputMode = "numeric"; input.pattern = "[0-9]*"; }
         input.oninput = () => {
             if (field.numeric_only) input.value = input.value.replace(/[^0-9]/g, "");
@@ -170,7 +175,7 @@ function renderCodeEditor(question, host) {
     const run = document.createElement("button"); run.className = "run-button"; run.textContent = "▶ Run"; run.disabled = true; run.hidden = !c.runnable;
     const tests = document.createElement("button"); tests.textContent = "Run tests"; tests.hidden = !c.runnable_tests; tests.disabled = true;
     const reset = document.createElement("button"); reset.textContent = "Reset"; reset.hidden = c.read_only; reset.disabled = true;
-    const toggleExplorer = document.createElement("button"); toggleExplorer.textContent = "Files"; toggleExplorer.setAttribute("aria-label", "Toggle explorer"); toggleExplorer.hidden = c.file_browser === false;
+    const toggleExplorer = document.createElement("button"); toggleExplorer.textContent = "Files"; toggleExplorer.setAttribute("aria-label", "Toggle explorer");
     actions.append(status, toggleExplorer, run, tests, reset, select); toolbar.append(fileTab, actions);
     const editorEl = document.createElement("div"); editorEl.className = "monaco-question-editor";
     workspace.append(toolbar, editorEl);
@@ -195,8 +200,9 @@ function renderCodeEditor(question, host) {
         const rect = workspace.getBoundingClientRect(); return Math.max(.12, Math.min(.75, (rect.bottom - event.clientY) / rect.height));
     }, ratio => outputPanel.style.flexBasis = `${Math.max(.12, Math.min(.75, ratio)) * 100}%`, "horizontal");
     workbench.append(explorer, explorerHandle, workspace); host.append(workbench);
-    function showExplorer(visible) { explorer.hidden = explorerHandle.hidden = !visible; workbench.classList.toggle("no-explorer", !visible); if (!visible) workbench.style.gridTemplateColumns = ""; toggleExplorer.setAttribute("aria-pressed", String(visible)); }
-    showExplorer(c.file_browser !== false);
+    function showExplorer(visible) { explorer.hidden = explorerHandle.hidden = !visible; workbench.classList.toggle("no-explorer", !visible); if (!visible) workbench.style.gridTemplateColumns = "";
+        else { const size = Number(localStorage.getItem(`pane-size:Resize explorer:${matchMedia("(max-width:580px)").matches ? "small" : "wide"}`)); if (size > 0 && size < 1) workbench.style.gridTemplateColumns = `minmax(55px,${size}fr) 5px minmax(0,${1-size}fr)`; } toggleExplorer.setAttribute("aria-pressed", String(visible)); }
+    showExplorer(c.file_browser === true);
     toggleExplorer.onclick = () => showExplorer(explorer.hidden);
     fileRow.onclick = () => editor?.focus();
     batch.onchange = () => { stdin.hidden = !batch.checked; };
@@ -274,7 +280,7 @@ function renderCodeEditor(question, host) {
         try {
             const data = await api("/api/diagnostics", {language: select.value, code: model.getValue()}, {signal: diagnosticAbort.signal});
             if (disposed || model.isDisposed() || editor.getModel() !== model || model.getVersionId() !== version) return;
-            const markers = data.markers.map(m => ({startLineNumber: m.line, endLineNumber: m.line, startColumn: m.column, endColumn: m.column + 1, message: m.message, severity: m.severity === "error" ? monaco.MarkerSeverity.Error : m.severity === "warning" ? monaco.MarkerSeverity.Warning : monaco.MarkerSeverity.Info}));
+            const markers = data.markers.map(m => ({startLineNumber: m.line, endLineNumber: m.end_line || m.line, startColumn: m.column, endColumn: m.end_column || m.column + 1, message: m.message, severity: m.severity === "error" ? monaco.MarkerSeverity.Error : m.severity === "warning" ? monaco.MarkerSeverity.Warning : monaco.MarkerSeverity.Info}));
             monaco.editor.setModelMarkers(model, "server", markers);
             status.textContent = markers.length ? `${markers.length} diagnostic${markers.length === 1 ? "" : "s"}` : "No issues found";
             status.title = markers.map(m => `Line ${m.startLineNumber}: ${m.message}`).join("\n") || data.message || "Syntax and compiler checks; not a complete language server.";
@@ -300,26 +306,19 @@ function renderCodeEditor(question, host) {
         if (disposed) return;
         if (!completionsRegistered) {
             completionsRegistered = true;
-            Object.entries(config.languages).forEach(([language, settings]) => {
-                monaco.languages.registerCompletionItemProvider(language, {provideCompletionItems(model, position) {
-                    const word = model.getWordUntilPosition(position);
-                    const range = {startLineNumber: position.lineNumber, endLineNumber: position.lineNumber, startColumn: word.startColumn, endColumn: word.endColumn};
-                    const names = new Set([...settings.suggestions, ...(model.getValue().match(/\b[A-Za-z_]\w*\b/g) || [])]);
-                    return {suggestions: [...names].map(name => ({label: name, insertText: name, kind: monaco.languages.CompletionItemKind.Text, range}))};
-                }});
-            });
+            registerEditorAssistance(monaco, config.languages);
         }
         const language = select.value;
         editor = monaco.editor.create(editorEl, {value: state.answers[question.id]?.[language] ?? c.default_code[language] ?? "", language,
             theme: "vs-dark", automaticLayout: true, fontSize: 14, minimap: {enabled: false}, wordWrap: "on", scrollBeyondLastLine: false,
-            autoClosingBrackets: "always", autoIndent: "full", quickSuggestions: c.intellisense, suggestOnTriggerCharacters: c.intellisense,
+            autoClosingBrackets: "always", autoIndent: "full", quickSuggestions: c.intellisense ? {other: true, comments: false, strings: false} : false, parameterHints: {enabled: c.intellisense}, smoothScrolling: true, cursorSmoothCaretAnimation: "on", suggestOnTriggerCharacters: c.intellisense,
             tabCompletion: c.intellisense ? "on" : "off", readOnly: Boolean(c.read_only)});
         run.disabled = tests.disabled = reset.disabled = false;
         state.answers[question.id] ||= {};
         state.answers[question.id][language] = editor.getValue(); save();
         editor.onDidChangeModelContent(() => {
             state.answers[question.id] ||= {}; state.answers[question.id][select.value] = getCode();
-            delete state.score[question.id]; updateScore(); save(); scheduleDiagnostics();
+            delete state.score[question.id]; delete state.score._assessment; updateScore(); save(); scheduleDiagnostics();
         });
         editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => c.runnable ? run.click() : c.runnable_tests && tests.click());
         scheduleDiagnostics(); editorInstances.push(editor);
@@ -344,7 +343,7 @@ function finish() {
     document.getElementById("submit-assessment").disabled = true;
     document.getElementById("question-host").inert = true;
     document.getElementById("complete-title").textContent = state.reason === "timeout" ? "Time is up" : "Assessment submitted";
-    document.getElementById("complete-message").textContent = assessment.score_visibility.upon_completion ? `Tests passed: ${formatScore()}` : "Your work has been saved.";
+    document.getElementById("complete-message").textContent = assessment.score_visibility.upon_completion ? `Score: ${formatScore()}` : "Your work has been saved.";
     document.getElementById("complete-dialog").hidden = false;
     updateScore();
 }

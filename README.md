@@ -15,11 +15,10 @@ python app.py
 Open http://127.0.0.1:5000/. Monaco loads from its CDN. Java requires `javac`
 and `java`; C++ requires `g++`. Use Python, Java, or C++ for either sample set.
 
-The menu contains two samples: untimed practice with unlimited attempts and a
-30-minute assessment with one attempt. Both have instructions and five coding
-problems. The timed assessment also has a separate name/email/student ID question.
-Questions use numbers; task titles belong to the stimulus. `/editor` remains
-available by direct URL for development, without a stimulus or menu link.
+The menu contains the Lambert Competitive Programming Tryout: student details,
+instructions, then Odd Ones Out, Swapped Spelling, and Academic Comeback.
+It has a 30-minute time limit. `/editor` remains available by direct URL for
+development, without a stimulus or menu link.
 
 ## Workspace
 
@@ -81,13 +80,13 @@ run, not a separate final automatic grading pass.
 
 ## Assessment configuration
 
-`assessments/assignments.json` lists the assessment files. Supported response
-widgets are `code_editor`, `short_answer`, and `stimulus_only`. Code widgets retain
-language selection, per-language starter code/drafts, tests, input/output controls,
-IntelliSense, explorer visibility, and read-only settings. Stimulus-only questions
-reference Markdown in `stimuli`. Short answers support character limits, numeric
-input/ranges, and email validation. Time limits, attempts, passcodes, early-submit,
-auto-submit-on-leave, and score visibility are assessment-level settings.
+See [ASSESSMENT_FORMAT.md](ASSESSMENT_FORMAT.md) for JSON/folder/ZIP bundles,
+text-file references, shared widget defaults, custom Python graders, score hooks,
+and the converted tryout layout. The active menu follows assignments.json and contains only the actual tryout.
+
+The old fixed test-case configuration has been replaced by trusted server-authored
+graders. Their source and assets never go into the public page configuration.
+Use `admin_tools.py --help` for dedicated host administration examples.
 
 ## Deployment boundary
 
@@ -111,6 +110,7 @@ workers in production. Do not enable Flask debug mode on the public site.
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
 node --check static/assessment.js
 node --check static/home.js
+node tests/editor_behavior.cjs
 ```
 
 ## Math in Markdown

@@ -101,3 +101,13 @@ select, input, textarea { border: 1px solid #494949; border-radius: 3px; backgro
 }
 .math-expression[data-display="true"] { display: block; overflow-x: auto; }
 .math-expression .katex-display { margin: 1em 0; }
+/* Small refinements retain the plain, compact workspace. */
+button, .button, select, .resize-handle { transition: background-color 120ms ease, border-color 120ms ease, opacity 120ms ease; }
+button, .button { border-color: #45484c; }
+.question-footer { justify-content: flex-end; gap: 7px; padding: 2px 1px; }
+.question-footer > span { margin-right: auto; }
+.test-header { gap: 14px; }
+.editor-toolbar { padding-inline: 9px; }
+.output-header { min-height: 30px; }
+.stimulus-pane, .stimulus-only-pane { scrollbar-gutter: stable; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }

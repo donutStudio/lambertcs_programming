@@ -17,6 +17,30 @@ class AppTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.app = create_app({'TESTING': True, 'SECRET_KEY': 'test-only', 'ATTEMPT_DATABASE': Path(self.temp.name) / 'attempts.sqlite3'})
         self.client = self.app.test_client()
+        from club.routes import parser
+        # Build isolated regression fixtures in the test's temporary directory.
+        # No example assessments are installed or exposed by the application.
+        from club.assessments import AssessmentParser
+        fixtures = []
+        for timed in (False, True):
+            item = {'id': 'timed_programming' if timed else 'practice_programming',
+                    'title': 'Regression fixture', 'time_limit_seconds': 1800 if timed else 0,
+                    'number_of_attempts': 1 if timed else 0,
+                    'stimuli': {'instructions': 'Instructions'},
+                    'questions': [{'id': 'instructions', 'response_type': 'stimulus_only', 'stimulus': 'instructions'}]}
+            if timed:
+                item['questions'].append({'id': 'student', 'response_type': 'short_answer', 'response_config': {'fields': [{'id': 'name', 'question_text': 'Name'}, {'id': 'email', 'question_text': 'Email'}]}})
+            for number in range(5):
+                item['questions'].append({'id': 'greeting' if number == 0 else f'q{number}',
+                    'response_type': 'code_editor', 'response_config': {
+                        'supported_languages': ['python'], 'grader': {
+                            'code': 'def grade(ctx): ctx.check("", "Hello, world!")', 'max_score': 1}}})
+            name = item['id'] + '.json'
+            (Path(self.temp.name) / name).write_text(json.dumps(item), encoding='utf-8')
+            fixtures.append(AssessmentParser(self.temp.name).load(name))
+        patcher = patch('club.routes.parser.load_all', return_value=fixtures)
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
     def begin(self, assessment='practice_programming', client=None):
         response = (client or self.client).post(f'/api/assessment/{assessment}/attempt', json={})
@@ -132,7 +156,7 @@ class AppTests(unittest.TestCase):
         html = self.client.get('/assessment/practice_programming').get_data(as_text=True)
         config = json.loads(re.search(r'<script id="assessment-config" type="application/json">(.*?)</script>', html).group(1))
         for q in config['assessment']['questions']:
-            self.assertNotIn('tests', q['response_config'])
+            self.assertNotIn('grader', q['response_config'])
         self.assertNotIn('passcode', config['assessment'])
 
     def test_server_scoring_and_invalidation(self):
@@ -142,7 +166,7 @@ class AppTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json['passed'], 1)
         saved = self.client.get(f'/api/attempt/{attempt["id"]}').json['attempt']
-        self.assertEqual(saved['score']['greeting']['passed'], 1)
+        self.assertEqual(saved['score']['greeting']['earned'], 1)
         saved = self.client.post(f'/api/attempt/{attempt["id"]}', json={'answers': {'greeting': {'python': 'print(0)'}}}).json['attempt']
         self.assertEqual(saved['score'], {})
 
@@ -174,6 +198,19 @@ class AppTests(unittest.TestCase):
         result = wait_for(lambda r: r['done'])
         self.assertIn('Name: Ada\nHello, Ada\n', result['output'])
         self.assertIn('Process exited 0', result['output'])
+
+    def test_grader_cannot_overwrite_newer_draft(self):
+        attempt = self.begin()
+        url = f'/api/attempt/{attempt["id"]}'
+        def delayed_grader(*args):
+            self.client.post(url, json={'answers': {'greeting': {'python': 'print("new draft")'}}})
+            return {'earned': 1, 'maximum': 1, 'tests': [], 'assessment_score': None}
+        with patch('club.grading.grade_response', side_effect=delayed_grader):
+            response = self.client.post('/assessment/practice_programming/run-tests', json={'attempt_id': attempt['id'], 'question_id': 'greeting', 'language': 'python', 'code': 'print("old draft")'})
+        self.assertEqual(response.status_code, 200)
+        saved = self.client.get(url).json['attempt']
+        self.assertEqual(saved['answers']['greeting']['python'], 'print("new draft")')
+        self.assertEqual(saved['score'], {})
 
     def test_host_only_export(self):
         attempt = self.begin()

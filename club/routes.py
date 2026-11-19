@@ -50,9 +50,10 @@ def find_assessment(assessment_id):
 def public_assessment(item):
     item = copy.deepcopy(item)
     item["requires_passcode"] = bool(item.pop("passcode", ""))
+    item.pop("response_defaults", None)
     for question in item["questions"]:
         config = question.get("response_config", {})
-        config["test_count"] = len(config.pop("tests", []))
+        config.pop("grader", None)
     return item
 
 
@@ -154,12 +155,36 @@ def attempt_state(attempt_id):
                 answers = clean_answers(item, data.get("answers", attempt["answers"]))
             except ValueError as error:
                 return jsonify(error=str(error)), 400
+            if data.get("submit"):
+                import re
+                for question in item["questions"]:
+                    for index, field in enumerate(question.get("response_config", {}).get("fields", [])):
+                        value = answers.get(f'{question["id"]}:{field.get("id", index)}', '')
+                        if field.get("required") and not value.strip():
+                            return jsonify(error=f'Complete {field.get("question_text", "required field")} before submitting.'), 400
+                        if value and ((field.get("email") and not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", value)) or (field.get("numeric_only") and not value.isdecimal())):
+                            return jsonify(error=f'Invalid {field.get("question_text", "answer")}'), 400
             now = time.time()
             score = attempt["score"]
+            if answers != attempt["answers"]:
+                score.pop("_assessment", None)
             for question_id, result in list(score.items()):
+                if question_id == "_assessment":
+                    continue
+                if "language" not in result:
+                    if answers != attempt["answers"]: del score[question_id]
+                    continue
                 code = answers.get(question_id, {}).get(result["language"], "")
                 if hashlib.sha256(code.encode()).hexdigest() != result["code_sha256"]:
                     del score[question_id]
+            if data.get("submit"):
+                from .grading import grade_response
+                for question in item["questions"]:
+                    grader = question["response_config"].get("grader", {})
+                    if question["response_type"] == "short_answer" and grader.get("code"):
+                        result = grade_response(None, "", grader, answers)
+                        score[question["id"]] = {"earned": result["earned"], "maximum": result["maximum"]}
+                        if result["assessment_score"] is not None: score["_assessment"] = result["assessment_score"]
             db.execute("UPDATE attempts SET answers=?, updated=?, submitted=?, reason=?, score=? WHERE id=?",
                        (json.dumps(answers), now, now if data.get("submit") else None,
                         "leave" if data.get("reason") == "leave" and data.get("submit") else "submitted" if data.get("submit") else None, json.dumps(score), attempt_id))
@@ -229,20 +254,29 @@ def run_tests(assessment_id):
         attempt = owned(db, data.get("attempt_id"), session["device"])
         if not attempt or attempt["assessment"] != assessment_id or attempt["submitted"] is not None:
             return jsonify(error="An active attempt is required"), 403
-    results = []
-    for test in c["tests"]:
-        output = execute_for_response(language, code, test.get("input", ""))
-        passed = output.rstrip() == str(test.get("expected_output", "")).rstrip()
-        results.append({"name": test.get("name", "Test"), "passed": passed, "hidden": bool(test.get("hidden")),
-                        "output": "Passed" if passed else "Hidden test failed" if test.get("hidden") else output,
-                        "expected": None if test.get("hidden") else test.get("expected_output")})
+    original_code = attempt["answers"].get(question["id"], {}).get(language)
+    from .grading import grade_response
+    if not c.get("grader", {}).get("code"):
+        return jsonify(error="No grader configured"), 400
+    try:
+        result = grade_response(language, code, c["grader"], attempt["answers"])
+    except Exception:
+        current_app.logger.exception("Assessment grader failed")
+        return jsonify(error="The assessment grader failed; contact the administrator."), 500
+    results = result["tests"]
     with database() as db:
         attempt = owned(db, attempt["id"], session["device"])
         if attempt["submitted"] is not None:
             return jsonify(error="Attempt has ended"), 409
         score = attempt["score"]
-        score[question["id"]] = {"passed": sum(r["passed"] for r in results), "total": len(results),
+        current_code = attempt["answers"].get(question["id"], {}).get(language)
+        if current_code != code and current_code != original_code:
+            # A long-running grader must not overwrite a newer autosaved draft.
+            return jsonify(tests=results, passed=sum(r["passed"] for r in results), total=len(results), score=score)
+        score[question["id"]] = {"earned": result["earned"], "maximum": result["maximum"],
                                   "code_sha256": hashlib.sha256(code.encode()).hexdigest(), "language": language}
+        if result["assessment_score"] is not None:
+            score["_assessment"] = result["assessment_score"]
         answers = attempt["answers"]
         answers.setdefault(question["id"], {})[language] = code
         db.execute("UPDATE attempts SET score=?, answers=?, updated=? WHERE id=?",
@@ -258,7 +292,7 @@ def editor():
     item["questions"] = [{"id": "editor", "response_type": "code_editor", "response_config": {
         "supported_languages": list(LANGUAGES), "default_code": {k: v["default_code"] for k, v in LANGUAGES.items()},
         "files": [], "runnable": True, "runnable_tests": False, "output": True, "allow_input": True,
-        "file_browser": True, "read_only": False, "intellisense": True}}]
+        "file_browser": False, "read_only": False, "intellisense": True}}]
     config = {"assessment": item, "languages": LANGUAGES, "monacoBase": MONACO_BASE, "runUrl": "/run", "stimuliHtml": {}, "standalone": True}
     return render_template("assessment.html", assessment=item, config=config, monaco_base=MONACO_BASE)
 
