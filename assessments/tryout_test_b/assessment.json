@@ -1,11 +1,11 @@
 {
-  "id": "tryout_test_fixed",
+  "id": "tryout_test",
   "allowed_reference_sheets": ["py_reference", "java_reference", "cpp_reference"],
-  "title": "Lambert Competitive Programming Tryout FIXED",
+  "title": "Lambert Competitive Programming Tryout B (Friday's actual test)",
   "time_limit_seconds": 1800,
   "number_of_attempts": 1,
-  "passcode": "AX6JWG",
-  "submittable_early": true,
+  "passcode": "C0D3",
+  "submittable_early": false,
   "auto_submit_on_leave": false,
   "score_visibility": {
     "while_taking": true,

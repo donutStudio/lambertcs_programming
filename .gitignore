@@ -16,7 +16,6 @@ htmlcov/
 .DS_Store
 submissions/
 instance/
-private_assessments/
 *.class
 *.o
 *.obj
