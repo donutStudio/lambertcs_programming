@@ -23,12 +23,21 @@ parser = AssessmentParser()
 
 @pages.before_request
 def identify_device():
-    if request.path.startswith("/static/"):
+    if request.endpoint == "static":
         return
     if request.method == "POST":
         origin = request.headers.get("Origin")
-        if origin and urlsplit(origin).netloc != request.host:
-            return jsonify(error="Cross-origin requests are not allowed."), 403
+
+        allowed_origins = {
+            f"{request.scheme}://{request.host}",
+            "https://playful-trifle-80d61d.netlify.app",
+            "https://tryouts.lambertcs.club",
+        }
+
+        if origin and origin not in allowed_origins:
+            return jsonify(
+                error="Cross-origin requests are not allowed."
+            ), 403
     ip = request.remote_addr or "unknown"
     agent = request.headers.get("User-Agent", "")[:512]
     fingerprint = hmac.new(current_app.secret_key.encode(), f"{ip}|{agent}".encode(), hashlib.sha256).hexdigest()
@@ -88,8 +97,10 @@ def assessment(assessment_id):
         for field in question.get("response_config", {}).get("fields", []):
             field["question_html"] = render_markdown(field.get("question_text", ""))
     config = {"assessment": item, "languages": LANGUAGES, "monacoBase": MONACO_BASE,
-              "runUrl": "/run", "testsUrl": f"/assessment/{assessment_id}/run-tests",
-              "attemptUrl": f"/api/assessment/{assessment_id}/attempt",
+              "baseUrl": url_for("pages.index").rstrip("/"),
+              "homeUrl": url_for("pages.index"),
+              "runUrl": url_for("pages.run"), "testsUrl": url_for("pages.run_tests", assessment_id=assessment_id),
+              "attemptUrl": url_for("pages.begin_attempt", assessment_id=assessment_id),
               "stimuliHtml": {key: render_markdown(value)
                               for key, value in item.get("stimuli", {}).items()}}
     return render_template("assessment.html", assessment=item, config=config, monaco_base=MONACO_BASE)
@@ -293,7 +304,9 @@ def editor():
         "supported_languages": list(LANGUAGES), "default_code": {k: v["default_code"] for k, v in LANGUAGES.items()},
         "files": [], "runnable": True, "runnable_tests": False, "output": True, "allow_input": True,
         "file_browser": False, "read_only": False, "intellisense": True}}]
-    config = {"assessment": item, "languages": LANGUAGES, "monacoBase": MONACO_BASE, "runUrl": "/run", "stimuliHtml": {}, "standalone": True}
+    config = {"assessment": item, "languages": LANGUAGES, "monacoBase": MONACO_BASE,
+              "baseUrl": url_for("pages.index").rstrip("/"), "homeUrl": url_for("pages.index"),
+              "runUrl": url_for("pages.run"), "stimuliHtml": {}, "standalone": True}
     return render_template("assessment.html", assessment=item, config=config, monaco_base=MONACO_BASE)
 
 
