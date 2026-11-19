@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{{ assessment.title }}</title><link rel="stylesheet" href="{{ url_for('static',filename='style.css') }}"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.19.1/dist/katex.min.css"></head>
 <body class="assessment-page"><header class="test-header">
-<a class="exit-link" href="/" id="exit-assessment">← Assessments</a><div class="assessment-name">{{ assessment.title }}</div>
+<a class="exit-link" href="{{ url_for('pages.index') }}" id="exit-assessment">← Assessments</a><div class="assessment-name">{{ assessment.title }}</div>
 <nav id="question-nav" aria-label="Question navigation"><select id="question-select" aria-label="Navigate to question"></select></nav>
 <div class="header-right"><span id="save-status" role="status"></span><span id="score-display" hidden></span><span id="timer">No Time Limit</span><button id="submit-assessment" class="submit-button">Submit</button></div>
 </header><main id="question-host" class="question-host"></main>

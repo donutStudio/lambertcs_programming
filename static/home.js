@@ -1,7 +1,7 @@
-const assessments = JSON.parse(document.getElementById("home-config").textContent);
+const config = JSON.parse(document.getElementById("home-config").textContent);
 async function refresh() {
     try {
-        const response = await fetch("/api/assignments");
+        const response = await fetch(config.assignmentsUrl);
         if (!response.ok) throw new Error("Could not load attempts. Refresh to retry.");
         const statuses = await response.json();
         document.querySelectorAll("li[data-assessment-id]").forEach(row => {

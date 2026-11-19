@@ -1,5 +1,7 @@
 const config = JSON.parse(document.getElementById("assessment-config").textContent);
 const assessment = config.assessment;
+// Flask supplies the public base path, including any server-side mount prefix.
+const appUrl = path => config.baseUrl + path;
 let state = {answers: {}, score: {}};
 let activeQuestion = 0, submitting = false, saveTimer, saveChain = Promise.resolve(), clockOffset = 0;
 let editorInstances = [], cleanups = [];
@@ -29,7 +31,7 @@ function persist(extra = {}) {
     const answers = structuredClone(state.answers);
     saveChain = saveChain.catch(() => {}).then(async () => {
         try {
-            const data = await api(`/api/attempt/${state.id}`, {answers, ...extra});
+            const data = await api(appUrl(`/api/attempt/${state.id}`), {answers, ...extra});
             acceptClock(data);
             if (JSON.stringify(answers) === JSON.stringify(state.answers)) state.score = data.attempt.score;
             state.reason = data.attempt.reason;
@@ -216,7 +218,7 @@ function renderCodeEditor(question, host) {
     function terminalDone() { run.disabled = tests.disabled = !editor; stop.disabled = eof.disabled = true; input.hidden = true; batch.disabled = select.disabled = false; }
     async function poll() {
         try {
-            const data = await api(`/api/terminal/${terminalId}`);
+            const data = await api(appUrl(`/api/terminal/${terminalId}`));
             if (disposed) return;
             output.textContent = data.output;
             input.hidden = !c.allow_input || data.done || !data.ready;
@@ -232,7 +234,7 @@ function renderCodeEditor(question, host) {
         if (!terminalId) return;
         input.disabled = true;
         try {
-            const data = await api(`/api/terminal/${terminalId}`, {input: value});
+            const data = await api(appUrl(`/api/terminal/${terminalId}`), {input: value});
             output.textContent = data.output;
             input.value = "";
             input.size = 1;
@@ -244,8 +246,8 @@ function renderCodeEditor(question, host) {
         if (event.ctrlKey && event.key.toLowerCase() === "d") { event.preventDefault(); eof.click(); }
         if (event.ctrlKey && event.key.toLowerCase() === "c") { event.preventDefault(); stop.click(); }
     };
-    eof.onclick = async () => { if (terminalId) { await api(`/api/terminal/${terminalId}`, {eof: true}).catch(error => output.textContent += `\n${error.message}`); input.hidden = true; eof.disabled = true; } };
-    stop.onclick = () => terminalId && api(`/api/terminal/${terminalId}`, {stop: true}).catch(error => output.textContent += `\n${error.message}`);
+    eof.onclick = async () => { if (terminalId) { await api(appUrl(`/api/terminal/${terminalId}`), {eof: true}).catch(error => output.textContent += `\n${error.message}`); input.hidden = true; eof.disabled = true; } };
+    stop.onclick = () => terminalId && api(appUrl(`/api/terminal/${terminalId}`), {stop: true}).catch(error => output.textContent += `\n${error.message}`);
     run.onclick = async () => {
         run.disabled = tests.disabled = select.disabled = batch.disabled = true; output.textContent = ""; focusedTerminal = false;
         try {
@@ -253,8 +255,8 @@ function renderCodeEditor(question, host) {
                 output.textContent = (await api(config.runUrl, {language: select.value, code: getCode(), input: stdin.value})).output;
                 terminalDone();
             } else {
-                const data = await api("/api/terminal", {language: select.value, code: getCode()});
-                if (disposed) { await api(`/api/terminal/${data.id}`, {stop: true}); return; }
+                const data = await api(appUrl("/api/terminal"), {language: select.value, code: getCode()});
+                if (disposed) { await api(appUrl(`/api/terminal/${data.id}`), {stop: true}); return; }
                 terminalId = data.id; stop.disabled = false; await poll();
                 if (!input.hidden) input.focus();
             }
@@ -278,7 +280,7 @@ function renderCodeEditor(question, host) {
         const model = editor.getModel(), version = model.getVersionId();
         status.textContent = "Checking…";
         try {
-            const data = await api("/api/diagnostics", {language: select.value, code: model.getValue()}, {signal: diagnosticAbort.signal});
+            const data = await api(appUrl("/api/diagnostics"), {language: select.value, code: model.getValue()}, {signal: diagnosticAbort.signal});
             if (disposed || model.isDisposed() || editor.getModel() !== model || model.getVersionId() !== version) return;
             const markers = data.markers.map(m => ({startLineNumber: m.line, endLineNumber: m.end_line || m.line, startColumn: m.column, endColumn: m.end_column || m.column + 1, message: m.message, severity: m.severity === "error" ? monaco.MarkerSeverity.Error : m.severity === "warning" ? monaco.MarkerSeverity.Warning : monaco.MarkerSeverity.Info}));
             monaco.editor.setModelMarkers(model, "server", markers);
@@ -298,7 +300,7 @@ function renderCodeEditor(question, host) {
     reset.onclick = () => editor?.setValue(c.default_code[select.value] || "");
     cleanups.push(() => {
         disposed = true; clearTimeout(diagnosticTimer); clearTimeout(pollTimer); diagnosticAbort?.abort();
-        if (terminalId) fetch(`/api/terminal/${terminalId}`, {method: "POST", headers: {"Content-Type": "application/json"}, body: '{"stop":true}', keepalive: true});
+        if (terminalId) fetch(appUrl(`/api/terminal/${terminalId}`), {method: "POST", headers: {"Content-Type": "application/json"}, body: '{"stop":true}', keepalive: true});
     });
     if (!window.require) { editorEl.textContent = "Editor unavailable. Refresh when connected to the internet."; return; }
     window.require.config({paths: {vs: config.monacoBase + "vs"}});
@@ -367,20 +369,20 @@ function updateTimer() {
 }
 document.getElementById("submit-assessment").onclick = () => submitAssessment();
 document.getElementById("submit-assessment").hidden = config.standalone || Boolean(assessment.time_limit_seconds && !assessment.submittable_early);
-document.getElementById("complete-home").onclick = () => location.href = "/";
+document.getElementById("complete-home").onclick = () => location.href = config.homeUrl;
 document.getElementById("exit-assessment").onclick = async event => {
     if (config.standalone || state.submitted) return;
     event.preventDefault();
     if (assessment.auto_submit_on_leave) {
         if (!confirm("Leaving will submit this assessment. Continue?")) return;
         await submitAssessment(true, "leave");
-        if (state.submitted) location.href = "/";
-    } else { try { await persist(); location.href = "/"; } catch (error) { alert(error.message); } }
+        if (state.submitted) location.href = config.homeUrl;
+    } else { try { await persist(); location.href = config.homeUrl; } catch (error) { alert(error.message); } }
 };
 function beaconSave() {
     if (config.standalone || state.submitted || !state.id) return;
     const body = {answers: state.answers, ...(assessment.auto_submit_on_leave ? {submit: true, reason: "leave"} : {})};
-    navigator.sendBeacon(`/api/attempt/${state.id}`, new Blob([JSON.stringify(body)], {type: "application/json"}));
+    navigator.sendBeacon(appUrl(`/api/attempt/${state.id}`), new Blob([JSON.stringify(body)], {type: "application/json"}));
 }
 window.addEventListener("pagehide", beaconSave);
 document.addEventListener("visibilitychange", () => { if (document.hidden && !assessment.auto_submit_on_leave) beaconSave(); });

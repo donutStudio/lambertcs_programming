@@ -5,4 +5,4 @@
 <div><h2>{{ assessment.title }}</h2><p class="assessment-meta">Attempts: {% if assessment.number_of_attempts == 0 %}unlimited{% else %}{{ assessment.number_of_attempts }}{% endif %}, {% if assessment.time_limit_seconds %}Time Limit: {{ '%02d:%02d'|format(assessment.time_limit_seconds // 60, assessment.time_limit_seconds % 60) }}{% else %}No Time Limit{% endif %}</p></div>
 <a class="button" href="{{ url_for('pages.assessment',assessment_id=assessment.id) }}" aria-disabled="true">Loading…</a>
 </li>{% else %}<li>No assessments.</li>{% endfor %}</ul><p id="home-status" role="status"></p>
-</main><script id="home-config" type="application/json">{{ assessments|tojson }}</script><script src="{{ url_for('static',filename='home.js') }}"></script></body></html>
+</main><script id="home-config" type="application/json">{{ {'assignmentsUrl': url_for('pages.assignments')}|tojson }}</script><script src="{{ url_for('static',filename='home.js') }}"></script></body></html>

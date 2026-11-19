@@ -12,14 +12,27 @@ python -m pip install -r requirements.txt
 python app.py
 ```
 
-Open http://127.0.0.1:5000/. Monaco loads from its CDN. Java requires `javac`
+Open http://127.0.0.1:5000/tryouts/. Monaco loads from its CDN. Java requires `javac`
 and `java`; C++ requires `g++`. Use Python, Java, or C++ for either sample set.
 
 The menu contains Lambert Competitive Programming Practice: student details,
 instructions, then ten problems ordered from easier to harder. It is untimed,
 requires no password, and allows unlimited attempts. The original tryout is
-preserved outside the active assessments directory in `private_assessments/tryout_test/`. `/editor` remains available by direct URL for
+preserved outside the active assessments directory in `private_assessments/tryout_test/`. `/tryouts/editor` remains available by direct URL for
 development, without a stimulus or menu link.
+
+## Hosting path
+
+`APP_URL_PREFIX` in `club/config.py` controls the public hosting path and defaults
+to `/tryouts`. You can override it with the `APP_URL_PREFIX` environment variable
+before starting Flask, or pass it to `create_app` in application configuration.
+Use an empty string to serve at `/` instead. Restart the server after changing it.
+Routes, static assets, frontend requests, navigation, and the session-cookie path
+follow this setting. `/tryouts` redirects to `/tryouts/`.
+
+When using a reverse proxy, forward `/tryouts/` and its subpaths to Flask with
+the prefix intact. Flask handles the prefix itself; do not strip it or add it
+again through `SCRIPT_NAME` or `X-Forwarded-Prefix`.
 
 ## Workspace
 
@@ -111,7 +124,7 @@ workers in production. Do not enable Flask debug mode on the public site.
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
 node --check static/assessment.js
 node --check static/home.js
-node tests/editor_behavior.cjs
+node tests/url_prefix.cjs
 ```
 
 ## Math in Markdown
