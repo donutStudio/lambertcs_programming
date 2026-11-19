@@ -2,9 +2,9 @@
 #include <string>
 using namespace std;
 
-string swappedSpelling(const string& misspelling, const string& spelling) {
-    // Your code here!
-    return "";
+bool swappedSpelling(const string& misspelling, const string& spelling) {
+    // Your code here! Return true for Yes! or false for No!.
+    return false;
 }
 
 int main() {
@@ -13,6 +13,6 @@ int main() {
     cin >> misspelling;
     cerr << "Enter second string (correct spelling): " << flush;
     cin >> spelling;
-    cout << swappedSpelling(misspelling, spelling) << endl;
+    cout << (swappedSpelling(misspelling, spelling) ? "Yes!" : "No!") << endl;
     return 0;
 }

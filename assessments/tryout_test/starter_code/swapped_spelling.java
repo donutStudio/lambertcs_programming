@@ -1,9 +1,9 @@
 import java.util.Scanner;
 
 public class Main {
-    public static String swappedSpelling(String misspelling, String spelling) {
-        // Your code here!
-        return "";
+    public static boolean swappedSpelling(String misspelling, String spelling) {
+        // Your code here! Return true for Yes! or false for No!.
+        return false;
     }
 
     public static void main(String[] args) {
@@ -14,6 +14,6 @@ public class Main {
         System.err.print("Enter second string (correct spelling): ");
         System.err.flush();
         String spelling = sc.nextLine();
-        System.out.println(swappedSpelling(misspelling, spelling));
+        System.out.println(swappedSpelling(misspelling, spelling) ? "Yes!" : "No!");
     }
 }

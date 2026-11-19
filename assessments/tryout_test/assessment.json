@@ -40,7 +40,7 @@
           },
           {
             "id": "email",
-            "question_text": "Email",
+            "question_text": "Personal Email",
             "character_limit": 200,
             "email": true,
             "required": true
