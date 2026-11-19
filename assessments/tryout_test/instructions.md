@@ -5,7 +5,7 @@
 - You have 30 minutes to solve three short programming problems.
 - Each problem has 10 test cases, worth 10 points each (100 points per problem).
 - Solutions must be written in Python, Java, or C++.
-- Documentation is allowed through the **Reference** button in the top-left corner of the assessment interface.
+- Documentation is allowed, use the "Reference" button in the top-left corner of the interface. Do not use external resources or AI.
 - Input must be read from standard input and output must be written to standard output. Starter code is provided for each language.
 - Trailing whitespace in output does not matter.
 - Each test case has a runtime limit of 2 seconds and a memory limit of 256 MB. Exceeding either limit results in no credit for that test case.

@@ -3,9 +3,9 @@ import java.io.InputStreamReader;
 import java.util.Arrays;
 
 public class Main {
-    public static String candleSplit(int n) {
-        // Your code here!
-        return "";
+    public static boolean candleSplit(int n) {
+        // Your code here! Return true for YES or false for NO.
+        return false;
     }
 
     public static void main(String[] args) throws Exception {
@@ -13,6 +13,6 @@ public class Main {
         System.err.print("Enter n: ");
         System.err.flush();
         int n = Integer.parseInt(br.readLine().trim());
-        System.out.println(candleSplit(n));
+        System.out.println(candleSplit(n) ? "YES" : "NO");
     }
 }
