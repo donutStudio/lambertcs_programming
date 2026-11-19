@@ -1,0 +1,160 @@
+{
+  "id": "tryout_test_fixed",
+  "allowed_reference_sheets": ["py_reference", "java_reference", "cpp_reference"],
+  "title": "Lambert Competitive Programming Tryout FIXED",
+  "time_limit_seconds": 1800,
+  "number_of_attempts": 1,
+  "passcode": "AX6JWG",
+  "submittable_early": true,
+  "auto_submit_on_leave": false,
+  "score_visibility": {
+    "while_taking": true,
+    "upon_completion": true,
+    "score_format": "integer"
+  },
+  "stimuli": {
+    "instructions": {
+      "$file": "instructions.md"
+    },
+    "odd_ones_out": {
+      "$file": "odd_ones_out.md"
+    },
+    "academic_comeback": {
+      "$file": "academic_comeback.md"
+    },
+    "swapped_spelling": {
+      "$file": "swapped_spelling.md"
+    }
+  },
+  "questions": [
+    {
+      "id": "student",
+      "response_type": "short_answer",
+      "response_config": {
+        "fields": [
+          {
+            "id": "full_name",
+            "question_text": "Full name",
+            "character_limit": 120,
+            "required": true
+          },
+          {
+            "id": "email",
+            "question_text": "Personal Email",
+            "character_limit": 200,
+            "email": true,
+            "required": true
+          },
+          {
+            "id": "student_id",
+            "question_text": "Student ID",
+            "numeric_only": true,
+            "character_limit": 30,
+            "required": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "instructions",
+      "response_type": "stimulus_only",
+      "stimulus": "instructions"
+    },
+    {
+      "id": "odd_ones_out",
+      "response_type": "code_editor",
+      "stimulus": "odd_ones_out",
+      "response_config": {
+        "default_code": {
+          "python": {
+            "$file": "starter_code/odd_ones_out.py"
+          },
+          "java": {
+            "$file": "starter_code/odd_ones_out.java"
+          },
+          "cpp": {
+            "$file": "starter_code/odd_ones_out.cpp"
+          }
+        },
+        "grader": {
+          "code": {
+            "$file": "tests/odd_ones_out.py"
+          },
+          "assets": {
+            "cases": {
+              "$file": "tests/odd_ones_out.txt"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "swapped_spelling",
+      "response_type": "code_editor",
+      "stimulus": "swapped_spelling",
+      "response_config": {
+        "default_code": {
+          "python": {
+            "$file": "starter_code/swapped_spelling.py"
+          },
+          "java": {
+            "$file": "starter_code/swapped_spelling.java"
+          },
+          "cpp": {
+            "$file": "starter_code/swapped_spelling.cpp"
+          }
+        },
+        "grader": {
+          "code": {
+            "$file": "tests/swapped_spelling.py"
+          },
+          "assets": {
+            "cases": {
+              "$file": "tests/swapped_spelling.txt"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "academic_comeback",
+      "response_type": "code_editor",
+      "stimulus": "academic_comeback",
+      "response_config": {
+        "default_code": {
+          "python": {
+            "$file": "starter_code/academic_comeback.py"
+          },
+          "java": {
+            "$file": "starter_code/academic_comeback.java"
+          },
+          "cpp": {
+            "$file": "starter_code/academic_comeback.cpp"
+          }
+        },
+        "grader": {
+          "code": {
+            "$file": "tests/academic_comeback.py"
+          },
+          "assets": {
+            "cases": {
+              "$file": "tests/academic_comeback.txt"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "response_defaults": {
+    "code_editor": {
+      "supported_languages": [
+        "python",
+        "java",
+        "cpp"
+      ],
+      "grader": {
+        "max_score": 100
+      }
+    }
+  }
+}
