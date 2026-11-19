@@ -33,6 +33,7 @@ def identify_device():
             f"{request.scheme}://{request.host}",
             "https://playful-trifle-80d61d.netlify.app",
             "https://tryouts.lambertcs.club",
+            "https://lambertcs.netlify.app",
         }
 
         if origin and origin not in allowed_origins:
