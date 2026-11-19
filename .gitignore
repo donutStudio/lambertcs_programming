@@ -22,3 +22,5 @@ private_assessments/
 *.obj
 *.exe
 *.log
+README.md
+ASSESSMENT_FORMAT.md
