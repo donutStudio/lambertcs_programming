@@ -48,34 +48,6 @@
   },
   "questions": [
     {
-      "id": "student",
-      "response_type": "short_answer",
-      "response_config": {
-        "fields": [
-          {
-            "id": "full_name",
-            "question_text": "Full name",
-            "character_limit": 120,
-            "required": true
-          },
-          {
-            "id": "email",
-            "question_text": "Email",
-            "character_limit": 200,
-            "email": true,
-            "required": true
-          },
-          {
-            "id": "student_id",
-            "question_text": "Student ID",
-            "numeric_only": true,
-            "character_limit": 30,
-            "required": true
-          }
-        ]
-      }
-    },
-    {
       "id": "instructions",
       "response_type": "stimulus_only",
       "stimulus": "instructions"
