@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 from club import create_app
 from club.assessments import AssessmentParser
+from club.config import APP_URL_PREFIX
 
 
 def script_config(response, name):
@@ -43,7 +44,8 @@ class PrefixTests(unittest.TestCase):
 
     def test_default_prefix_and_trailing_slash_redirect(self):
         with patch.dict('os.environ', {}, clear=True):
-            app = self.app()
+            self.assertEqual(self.app().config['APP_URL_PREFIX'], APP_URL_PREFIX)
+            app = self.app('/tryouts')
         self.assertEqual(app.config['APP_URL_PREFIX'], '/tryouts')
         client = app.test_client()
         response = client.get('/tryouts')
@@ -82,7 +84,7 @@ class PrefixTests(unittest.TestCase):
                 self.assertEqual(config['attemptUrl'], prefix+'/api/assessment/demo/attempt')
 
     def test_attempt_save_grade_submit_and_execution_apis(self):
-        client = self.app().test_client()
+        client = self.app('/tryouts').test_client()
         config = script_config(client.get('/tryouts/assessment/demo'), 'assessment-config')
         response = client.post(config['attemptUrl'], json={})
         self.assertEqual(response.status_code, 200)

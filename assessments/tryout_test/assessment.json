@@ -1,5 +1,6 @@
 {
   "id": "tryout_test",
+  "allowed_reference_sheets": ["py_reference", "java_reference", "cpp_reference"],
   "title": "Lambert Competitive Programming Tryout (Actual test, the other one is just practice)",
   "time_limit_seconds": 1800,
   "number_of_attempts": 1,

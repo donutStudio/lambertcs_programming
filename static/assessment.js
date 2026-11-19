@@ -392,9 +392,21 @@ document.addEventListener("keydown", event => {
 async function initialize() {
     try {
         if (!config.standalone) {
-            let passcode;
-            if (assessment.requires_passcode) passcode = prompt("Assessment passcode");
-            const data = await api(config.attemptUrl, {passcode}); state = data.attempt; acceptClock(data);
+            let message = "Assessment passcode";
+            while (true) {
+                let passcode;
+                if (assessment.requires_passcode) {
+                    passcode = prompt(message);
+                    if (passcode === null) { location.href = config.homeUrl; return; }
+                }
+                try {
+                    const data = await api(config.attemptUrl, {passcode});
+                    state = data.attempt; acceptClock(data); break;
+                } catch (error) {
+                    if (!assessment.requires_passcode || error.message !== "Incorrect passcode") throw error;
+                    message = "Incorrect passcode. Please try again.";
+                }
+            }
         }
         buildNavigation(); showQuestion(0); updateScore(); updateTimer();
         if (config.standalone) document.getElementById("question-nav").hidden = true;

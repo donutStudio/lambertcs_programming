@@ -63,6 +63,55 @@ merge one level (e.g. grader code/assets override its shared maximum).
 }
 ```
 
+## Reference sheets
+
+Every assessment defaults to the three bundled Markdown references:
+`py_reference` (Python), `java_reference` (Java), and `cpp_reference` (C++).
+Set the top-level `allowed_reference_sheets` list to choose sheets and their menu
+order. An explicit empty list `[]` disables references and hides the button.
+Custom sheets are defined in the top-level `reference_sheets` object:
+
+```json
+{
+  "allowed_reference_sheets": ["py_reference", "java_reference", "cpp_reference", "exam_notes"],
+  "reference_sheets": {
+    "exam_notes": {
+      "name": "Exam notes",
+      "content": {"$file": "references/exam_notes.md"}
+    },
+    "inline_example": {
+      "name": "Units",
+      "content": "# Units\n\n## Distance\n\nUse meters. $1\\text{ km}=1000\\text{ m}$."
+    }
+  }
+}
+```
+
+`content` accepts an inline Markdown string or the same `{"$file": "..."}`
+syntax as stimuli, including folder/ZIP bundles. Defining a sheet does not allow
+it automatically: add its ID to `allowed_reference_sheets`. IDs must contain only
+letters, digits, underscores, and hyphens; built-in IDs are reserved. Duplicate
+or unknown allowed IDs and malformed custom sheets fail assessment loading.
+The built-in source files live in `club/reference_sheets/`.
+
+Reference opens a dropdown at the top left. Each chosen sheet opens in a separate
+draggable, resizable window; choosing an open sheet brings it forward. Escape or
+the close button closes it. Arrow keys on the title bar move it; arrow keys on
+the resize handle resize it (Shift uses larger steps). Search is case-insensitive
+literal text; selecting a result jumps to its section and highlights matches in
+ordinary text/code. Mathematics renders with the same KaTeX support as stimuli.
+
+The reader displays a continuous document, without collapsible sections. For lazy
+delivery, use `##` headings between reasonably sized sections. The page contains
+only allowed names/IDs/URLs; opening fetches section metadata, and scrolling loads
+nearby sections. Offscreen sections release their DOM content while keeping their
+measured heights. Search runs across the full sheet on the server and returns
+section locations, counts, and excerpts, not the whole document. Closing aborts
+requests and drops the window contents; responses are not cached by the browser.
+A sheet without H2 headings works as one section and loads as a unit. Avoid
+splitting a table, fenced code block, or shared Markdown link/footnote definition
+across sections. References are trusted assessment-author content, like stimuli.
+
 The old `tests: [{input, expected_output, ...}]` configuration is removed. Graders
 are trusted Python code (inline strings or file references) defining `grade(ctx)`.
 They run on the server and never come from a student's request. Their source,

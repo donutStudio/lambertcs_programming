@@ -1,6 +1,6 @@
 # Reading Goal *(Problem 10)*
 
-Alec is catching up on his reading! A list `pages` contains the number of pages he read each day, in order. He wants to find a block of consecutive days during which he read at least `goal` pages in total. Write a program that prints the minimum number of days in such a block. The block can start and end anywhere in the list, but days cannot be skipped. If there is no block with a total of at least `goal` pages, the program should print $\boxed{-1}$.
+Alec is catching up on his reading! A list `pages` contains the number of pages he read each day, in order. He wants to find a block of consecutive days during which he read at least `goal` pages in total. Write a program that prints the minimum number of days in such a block. The block can start and end anywhere in the list, but days cannot be skipped. If there is no block with a total of at least `goal` pages, the program should print `-1`.
 
 **Input Format**
 <br>

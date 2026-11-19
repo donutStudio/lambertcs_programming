@@ -15,6 +15,7 @@ from .config import MAX_CODE_LENGTH, MONACO_BASE
 from .execution import run_code
 from .languages import LANGUAGES
 from .markdown_math import render_markdown
+from .references import reference_name, reference_source, search_sections, split_sections
 from .store import count_attempts, database, latest, owned, start
 
 pages = Blueprint("pages", __name__)
@@ -57,13 +58,47 @@ def find_assessment(assessment_id):
 
 
 def public_assessment(item):
+    references = [{"id": key, "name": reference_name(item, key),
+                   "url": url_for("pages.reference_sheet", assessment_id=item["id"], sheet_id=key)}
+                  for key in item.get("allowed_reference_sheets", [])]
     item = copy.deepcopy(item)
+    item.pop("reference_sheets", None)
+    item["references"] = references
     item["requires_passcode"] = bool(item.pop("passcode", ""))
     item.pop("response_defaults", None)
     for question in item["questions"]:
         config = question.get("response_config", {})
         config.pop("grader", None)
     return item
+
+
+@pages.get("/api/assessment/<assessment_id>/references/<sheet_id>")
+def reference_sheet(assessment_id, sheet_id):
+    item = find_assessment(assessment_id)
+    if item is None or sheet_id not in item.get("allowed_reference_sheets", []):
+        return jsonify(error="Reference sheet not found"), 404
+    sections = split_sections(reference_source(item, sheet_id))
+    query = request.args.get("q")
+    if query is not None:
+        query = query.strip()
+        if len(query) > 200:
+            return jsonify(error="Search is limited to 200 characters"), 400
+        result = {"results": search_sections(sections, query) if query else []}
+    elif "section" in request.args:
+        try:
+            index = int(request.args["section"])
+            if index < 0:
+                raise ValueError
+            section = sections[index]
+        except (ValueError, IndexError):
+            return jsonify(error="Reference section not found"), 404
+        result = {"html": render_markdown(section["source"])}
+    else:
+        result = {"sections": [{"id": index, "title": section["title"]}
+                               for index, section in enumerate(sections)]}
+    response = jsonify(result)
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 def public_attempt(attempt):

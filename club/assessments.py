@@ -5,6 +5,7 @@ from pathlib import Path, PurePosixPath
 from zipfile import ZipFile
 
 from .config import BASE_DIR
+from .references import normalize_references
 
 
 class AssessmentParser:
@@ -64,6 +65,7 @@ class AssessmentParser:
         data["score_visibility"].setdefault("upon_completion", True)
         data["score_visibility"].setdefault("score_format", "fraction")
         data["stimuli"] = data.get("stimuli", {})
+        normalize_references(data)
         for question in data.get("questions", []):
             config = copy.deepcopy(data.get("response_defaults", {}).get(question["response_type"], {}))
             supplied = question.get("response_config", {})

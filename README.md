@@ -52,6 +52,12 @@ Debounced diagnostics underline Python syntax errors and unused imports; Java
 and C++ use installed compilers for errors/warnings without running the program.
 These checks are best effort, not full language servers or a proof of correctness.
 
+The top-left **Reference** menu opens Python, Java, and C++ quick references in
+draggable, resizable windows with search and KaTeX. Documents load as you scroll.
+Assessments can choose built-ins, add custom Markdown sheets (inline or `$file`),
+or disable references with `allowed_reference_sheets: []`; see
+[ASSESSMENT_FORMAT.md](ASSESSMENT_FORMAT.md#reference-sheets).
+
 ## Attempts and submissions
 
 `submissions/attempts.sqlite3` stores device records, attempt counts, start times,
@@ -125,6 +131,7 @@ workers in production. Do not enable Flask debug mode on the public site.
 node --check static/assessment.js
 node --check static/home.js
 node tests/url_prefix.cjs
+node tests/references_browser.cjs  # Requires Playwright and installed Chromium
 ```
 
 ## Math in Markdown

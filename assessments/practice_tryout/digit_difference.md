@@ -1,6 +1,6 @@
 # Digit Difference *(Problem 2)*
 
-From a positive integer `n`, write a program that prints the greatest digit in `n` minus the least digit in `n`. If all of the digits are the same, the program should print $\boxed{0}$.
+From a positive integer `n`, write a program that prints the greatest digit in `n` minus the least digit in `n`. If all of the digits are the same, the program should print `0`.
 
 **Input Format**
 <br>
