@@ -2,16 +2,29 @@
 
 Review commands use only Python's standard library; no venv activation is needed.
 """
+from __future__ import print_function
+
+import os
+import sys
+
+# Keep this file parseable by Oracle Linux 7's Python 2.7. Re-exec before
+# importing modern modules so `python admin_tools.py ...` works there too.
+if sys.version_info < (3, 9):
+    runtime = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.venv',
+                           'Scripts' if os.name == 'nt' else 'bin',
+                           'python.exe' if os.name == 'nt' else 'python')
+    if os.path.isfile(runtime) and os.path.realpath(runtime) != os.path.realpath(sys.executable):
+        os.execv(runtime, [runtime, os.path.abspath(__file__)] + sys.argv[1:])
+    sys.exit('Use Python 3.9+ or create a project .venv with Python 3.9+ first.')
+
 import argparse
 import csv
 from datetime import datetime
 import json
-import os
 from pathlib import Path
 import shutil
 import sqlite3
 import subprocess
-import sys
 import time
 
 ROOT = Path(__file__).resolve().parent

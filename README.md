@@ -119,25 +119,25 @@ python admin_tools.py regrade ATTEMPT_ID
 python admin_tools.py grade-pending
 ```
 
-On this Oracle Linux 7.9 VM, `/usr/bin/python` is Python 2.7; use the existing
-project Python 3.11 without activating its venv. A Bash function makes the same
-`python admin_tools.py ...` commands work while leaving the OS Python alone:
+On this Oracle Linux 7.9 VM, `/usr/bin/python` is Python 2.7. The admin launcher
+recognizes that and automatically re-executes the existing project Python 3.11
+before importing application code. You can use the exact same command without
+activating a venv or changing the OS Python:
 
 ```bash
 ssh MonkeMatrix
 cd /home/opc/lambertcs_programming
-python() { /home/opc/lambertcs_programming/.venv/bin/python "$@"; }
 python admin_tools.py doctor
 python admin_tools.py list --email student@example.com
 python admin_tools.py export --since '2026-11-19T11:50:00-05:00' --output submissions/tryouts-nov19.csv
 python admin_tools.py backup --output submissions/backup-nov19.sqlite3
 ```
 
-Put that function in `~/.bashrc` if you want it in later interactive SSH sessions,
-then run `source ~/.bashrc`. It selects an interpreter; it does not activate the
-venv. Alternatively run `.venv/bin/python admin_tools.py ...` directly. On another
-Linux host with a modern system Python, use `python3 admin_tools.py ...` or point
-the function at that interpreter. Do not replace Oracle Linux's `/usr/bin/python`.
+The bootstrap requires an existing `.venv` containing Python 3.9+ if your system
+Python is older. It never installs packages or changes your shell. Alternatively,
+run `.venv/bin/python admin_tools.py ...` directly, or use `python3` on another
+Linux host with a modern system interpreter. Do not replace Oracle Linux's
+`/usr/bin/python`.
 
 `list` and `export` accept `--assessment`, `--device`, `--name`, `--email`,
 `--student-id`, `--status`, and `--since`. Credential matching is case-insensitive
