@@ -46,7 +46,7 @@
             "$file": "starter_code/odd_ones_out.py"
           },
           "java": {
-            "$file": "starter_code/TryoutAOddOnesOut.java"
+            "$file": "starter_code/OddOnesOut.java"
           },
           "cpp": {
             "$file": "starter_code/odd_ones_out.cpp"
@@ -74,7 +74,7 @@
             "$file": "starter_code/swapped_spelling.py"
           },
           "java": {
-            "$file": "starter_code/TryoutASwappedSpelling.java"
+            "$file": "starter_code/SwappedSpelling.java"
           },
           "cpp": {
             "$file": "starter_code/swapped_spelling.cpp"
@@ -102,7 +102,7 @@
             "$file": "starter_code/academic_comeback.py"
           },
           "java": {
-            "$file": "starter_code/TryoutAAcademicComeback.java"
+            "$file": "starter_code/AcademicComeback.java"
           },
           "cpp": {
             "$file": "starter_code/academic_comeback.cpp"

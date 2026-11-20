@@ -11,6 +11,10 @@ class TryoutBTests(unittest.TestCase):
     def setUpClass(cls):
         cls.item = AssessmentParser().load('tryout_test_b')
 
+    def test_all_listed_bundles_load(self):
+        items = AssessmentParser().load_all()
+        self.assertEqual(len({item["id"] for item in items}), len(items))
+
     def test_layout_and_starters(self):
         self.assertEqual([q['id'] for q in self.item['questions']],
                          ['instructions', 'fizzes_and_buzzes', 'splling', 'dropping_grades'])
