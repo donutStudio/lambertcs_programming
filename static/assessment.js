@@ -154,6 +154,10 @@ function renderShortAnswer(question, host) {
         wrap.append(title, input); host.append(wrap);
     });
 }
+// Repair the released C++ starter without replacing a student's solution.
+function repairGradesPrompt(code) {
+    return code.replace(/(    getline\(cin, line\);\r?\n    istringstream input\(line\);\r?\n)(    cerr << "Enter grades separated by spaces: " << flush;\r?\n)/, "$2$1");
+}
 function renderCodeEditor(question, host) {
     const c = question.response_config;
     const workbench = document.createElement("div"); workbench.className = "code-workbench";
@@ -298,7 +302,7 @@ function renderCodeEditor(question, host) {
     select.onchange = () => {
         if (!editor) return;
         const old = editor.getModel();
-        const model = monaco.editor.createModel(state.answers[question.id]?.[select.value] ?? c.default_code[select.value] ?? "", select.value);
+        const model = monaco.editor.createModel(repairGradesPrompt(state.answers[question.id]?.[select.value] ?? c.default_code[select.value] ?? ""), select.value);
         editor.setModel(model); old.dispose(); refreshFilename(); scheduleDiagnostics();
         state.languages ||= {}; state.languages[question.id] = select.value;
         state.answers[question.id] ||= {}; state.answers[question.id][select.value] = model.getValue(); save();
@@ -325,7 +329,7 @@ function renderCodeEditor(question, host) {
         }
         const language = select.value;
         state.languages ||= {}; state.languages[question.id] = language;
-        editor = monaco.editor.create(editorEl, {value: state.answers[question.id]?.[language] ?? c.default_code[language] ?? "", language,
+        editor = monaco.editor.create(editorEl, {value: repairGradesPrompt(state.answers[question.id]?.[language] ?? c.default_code[language] ?? ""), language,
             theme: "vs-dark", automaticLayout: true, fontSize: 14, minimap: {enabled: false}, wordWrap: "on", scrollBeyondLastLine: false,
             autoClosingBrackets: "always", autoIndent: "full", quickSuggestions: c.intellisense ? {other: true, comments: false, strings: false} : false, parameterHints: {enabled: c.intellisense}, smoothScrolling: true, cursorSmoothCaretAnimation: "on", suggestOnTriggerCharacters: c.intellisense,
             tabCompletion: c.intellisense ? "on" : "off", readOnly: Boolean(c.read_only)});

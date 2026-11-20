@@ -13,9 +13,9 @@ int main() {
     vector<int> grades;
     int grade;
     string line;
+    cerr << "Enter grades separated by spaces: " << flush;
     getline(cin, line);
     istringstream input(line);
-    cerr << "Enter grades separated by spaces: " << flush;
     while (input >> grade) {
         grades.push_back(grade);
     }
