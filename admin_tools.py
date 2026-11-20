@@ -147,11 +147,18 @@ def main():
             print(str(len(rows)) + ' attempt(s)')
         else:
             args.output.parent.mkdir(parents=True, exist_ok=True)
+            for row in rows:
+                score = row['score']
+                earned = (score['_assessment']['earned'] if '_assessment' in score else
+                          sum(result.get('earned', 0) for result in score.values()))
+                # An unfinished final grading pass is not a verified zero.
+                row['total_score'] = (int(earned) if row['submitted'] is not None and
+                                      row.get('grading_status', 'complete') == 'complete' else None)
             if args.format == 'json':
                 args.output.write_text(json.dumps(rows, indent=2, ensure_ascii=False), encoding='utf-8')
                 print('Exported', len(rows), 'attempt(s) to', args.output)
                 return
-            keys = ['id', 'owner', 'assessment', 'full_name', 'email', 'student_id', 'started', 'deadline', 'submitted', 'updated', 'reason', 'grading_status', 'grading_error', 'answers', 'score', 'languages', 'ip', 'user_agent']
+            keys = ['id', 'owner', 'assessment', 'full_name', 'email', 'student_id', 'total_score', 'started', 'deadline', 'submitted', 'updated', 'reason', 'grading_status', 'grading_error', 'answers', 'score', 'languages', 'ip', 'user_agent']
             def safe(value):
                 if isinstance(value, dict): value = json.dumps(value, ensure_ascii=False)
                 if isinstance(value, str) and value.startswith(('=', '+', '-', '@', '\t', '\r', '\n')): value = "'" + value
