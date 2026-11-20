@@ -3,6 +3,7 @@ import os
 import re
 import secrets
 from datetime import timedelta
+from pathlib import Path
 from flask import Flask
 
 from .config import APP_URL_PREFIX, BASE_DIR
@@ -35,7 +36,7 @@ def create_app(config=None):
         except FileExistsError:
             pass
     app.config.update(SECRET_KEY=os.environ.get("SECRET_KEY") or key_path.read_text().strip(),
-                      ATTEMPT_DATABASE=BASE_DIR / "submissions" / "attempts.sqlite3",
+                      ATTEMPT_DATABASE=Path(os.environ.get('ATTEMPT_DATABASE', str(BASE_DIR / "submissions" / "attempts.sqlite3"))),
                       SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE="Strict",
                       SESSION_COOKIE_PATH=prefix or "/",
                       PERMANENT_SESSION_LIFETIME=timedelta(days=3650),
@@ -47,4 +48,7 @@ def create_app(config=None):
     app.register_blueprint(pages, url_prefix=prefix)
     from .admin import register_commands
     register_commands(app)
+    if not app.testing:
+        from .final_grading import start_worker
+        start_worker(app)
     return app

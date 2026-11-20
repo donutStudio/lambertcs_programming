@@ -60,6 +60,10 @@ class AssessmentParser:
         data.setdefault("auto_submit_on_leave", False)
         data.setdefault("passcode", "")
         data.setdefault("number_of_attempts", 1)
+        data.setdefault("required_credentials", [])
+        if (not isinstance(data['required_credentials'], list) or
+                any(key not in ('full_name', 'email', 'student_id') for key in data['required_credentials'])):
+            raise ValueError('required_credentials must contain full_name, email, or student_id')
         data.setdefault("score_visibility", {})
         data["score_visibility"].setdefault("while_taking", False)
         data["score_visibility"].setdefault("upon_completion", True)

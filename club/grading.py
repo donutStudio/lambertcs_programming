@@ -5,6 +5,8 @@ runs it with explicit runtime/memory/output limits. ctx.award()/set_score() own
 this response's score; ctx.set_assessment_score() can override the total.
 """
 import math
+import sys
+from pathlib import Path
 import subprocess
 import threading
 import time
@@ -48,6 +50,16 @@ class GradeContext:
     def run(self, input='', *, timeout=2, memory_mb=256, output_limit=100000, compile_timeout=30):
         if not self.prepared:
             self.command, self.compile_error = prepare(self.language, self.code, self.temp.name, compile_timeout=compile_timeout)
+            if self.language == 'python':
+                # input(prompt) is UI, not an answer. Keep prompts visible in the
+                # interactive terminal, but suppress them during automated grading.
+                runner = Path(self.temp.name) / '_grade_runner.py'
+                runner.write_text('import builtins, runpy\n'
+                                  '_input = builtins.input\n'
+                                  'def quiet_input(prompt=""):\n    return _input()\n'
+                                  'builtins.input = quiet_input\n'
+                                  'runpy.run_path("main.py", run_name="__main__")\n', encoding='utf-8')
+                self.command = [sys.executable, '-I', '-u', str(runner)]
             self.prepared = True
         if self.compile_error:
             return SimpleNamespace(output="", stderr=self.compile_error, returncode=1, timed_out=False, memory_exceeded=False, output_exceeded=False, elapsed=0)

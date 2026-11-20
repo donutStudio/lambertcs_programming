@@ -2,7 +2,8 @@ const config = JSON.parse(document.getElementById("assessment-config").textConte
 const assessment = config.assessment;
 // Flask supplies the public base path, including any server-side mount prefix.
 const appUrl = path => config.baseUrl + path;
-let state = {answers: {}, score: {}};
+let state = {answers: {}, score: {}, languages: {}};
+let gradingPoll;
 let activeQuestion = 0, submitting = false, saveTimer, saveChain = Promise.resolve(), clockOffset = 0;
 let editorInstances = [], cleanups = [];
 const saveStatus = document.getElementById("save-status");
@@ -29,12 +30,14 @@ function persist(extra = {}) {
     clearTimeout(saveTimer);
     if (config.standalone) return Promise.resolve();
     const answers = structuredClone(state.answers);
+    const languages = structuredClone(state.languages || {});
     saveChain = saveChain.catch(() => {}).then(async () => {
         try {
-            const data = await api(appUrl(`/api/attempt/${state.id}`), {answers, ...extra});
+            const data = await api(appUrl(`/api/attempt/${state.id}`), {answers, languages, ...extra});
             acceptClock(data);
             if (JSON.stringify(answers) === JSON.stringify(state.answers)) state.score = data.attempt.score;
             state.reason = data.attempt.reason;
+            state.grading_status = data.attempt.grading_status;
             if (data.attempt.submitted) { state.submitted = data.attempt.submitted; finish(); }
             saveStatus.textContent = "Saved";
             updateScore();
@@ -47,6 +50,8 @@ function persist(extra = {}) {
     return saveChain;
 }
 function formatScore() {
+    if (state.submitted && !["complete", "error"].includes(state.grading_status)) return "waiting";
+    if (state.grading_status === "error") return "unavailable — administrator review needed";
     let passed = 0, total = 0;
     assessment.questions.forEach(q => {
         total += state.score[q.id]?.maximum ?? q.response_config?.score_max ?? 0;
@@ -123,7 +128,8 @@ function buildQuestion(question, index) {
         const previous = document.createElement("button"); previous.textContent = "Previous"; previous.disabled = index === 0;
         previous.onclick = () => showQuestion(index - 1);
         const hint = document.createElement("span"); hint.textContent = "Alt + ← / →";
-        const next = document.createElement("button"); next.textContent = index === assessment.questions.length - 1 ? "Finish" : "Next";
+        const next = document.createElement("button"); next.textContent = index === assessment.questions.length - 1 ? "Submit" : "Next";
+        next.hidden = index === assessment.questions.length - 1 && Boolean(assessment.time_limit_seconds && !assessment.submittable_early);
         next.onclick = () => index < assessment.questions.length - 1 ? showQuestion(index + 1) : submitAssessment();
         footer.append(hint, previous, next); card.append(footer);
     }
@@ -167,7 +173,7 @@ function renderCodeEditor(question, host) {
     c.supported_languages.forEach(language => { if (config.languages[language]) select.add(new Option(config.languages[language].label, language)); });
     const questionLanguageKey = `language:${assessment.id}:${question.id}`;
     const assessmentLanguageKey = `language:${assessment.id}:last-used`;
-    const preferred = sessionStorage.getItem(questionLanguageKey) ?? sessionStorage.getItem(assessmentLanguageKey);
+    const preferred = state.languages?.[question.id] ?? sessionStorage.getItem(questionLanguageKey) ?? sessionStorage.getItem(assessmentLanguageKey);
     if (c.supported_languages.includes(preferred)) select.value = preferred;
     // Freeze the initial choice for this question, even if it stays on the default.
     sessionStorage.setItem(questionLanguageKey, select.value);
@@ -294,10 +300,17 @@ function renderCodeEditor(question, host) {
         const old = editor.getModel();
         const model = monaco.editor.createModel(state.answers[question.id]?.[select.value] ?? c.default_code[select.value] ?? "", select.value);
         editor.setModel(model); old.dispose(); refreshFilename(); scheduleDiagnostics();
+        state.languages ||= {}; state.languages[question.id] = select.value;
+        state.answers[question.id] ||= {}; state.answers[question.id][select.value] = model.getValue(); save();
         sessionStorage.setItem(questionLanguageKey, select.value);
         sessionStorage.setItem(assessmentLanguageKey, select.value);
     };
-    reset.onclick = () => editor?.setValue(c.default_code[select.value] || "");
+    reset.onclick = () => {
+        if (!editor || !confirm("Confirm reset? Replace your code with the starter code? You can undo this with Ctrl+Z.")) return;
+        editor.pushUndoStop();
+        editor.executeEdits("reset", [{range: editor.getModel().getFullModelRange(), text: c.default_code[select.value] || ""}]);
+        editor.pushUndoStop(); editor.focus();
+    };
     cleanups.push(() => {
         disposed = true; clearTimeout(diagnosticTimer); clearTimeout(pollTimer); diagnosticAbort?.abort();
         if (terminalId) fetch(appUrl(`/api/terminal/${terminalId}`), {method: "POST", headers: {"Content-Type": "application/json"}, body: '{"stop":true}', keepalive: true});
@@ -311,6 +324,7 @@ function renderCodeEditor(question, host) {
             registerEditorAssistance(monaco, config.languages);
         }
         const language = select.value;
+        state.languages ||= {}; state.languages[question.id] = language;
         editor = monaco.editor.create(editorEl, {value: state.answers[question.id]?.[language] ?? c.default_code[language] ?? "", language,
             theme: "vs-dark", automaticLayout: true, fontSize: 14, minimap: {enabled: false}, wordWrap: "on", scrollBeyondLastLine: false,
             autoClosingBrackets: "always", autoIndent: "full", quickSuggestions: c.intellisense ? {other: true, comments: false, strings: false} : false, parameterHints: {enabled: c.intellisense}, smoothScrolling: true, cursorSmoothCaretAnimation: "on", suggestOnTriggerCharacters: c.intellisense,
@@ -342,12 +356,19 @@ function showQuestion(index) {
 }
 function finish() {
     disposeQuestion();
-    document.getElementById("submit-assessment").disabled = true;
     document.getElementById("question-host").inert = true;
     document.getElementById("complete-title").textContent = state.reason === "timeout" ? "Time is up" : "Assessment submitted";
     document.getElementById("complete-message").textContent = assessment.score_visibility.upon_completion ? `Score: ${formatScore()}` : "Your work has been saved.";
     document.getElementById("complete-dialog").hidden = false;
     updateScore();
+    if (!["complete", "error"].includes(state.grading_status) && !gradingPoll) {
+        gradingPoll = setTimeout(async () => {
+            gradingPoll = null;
+            try { const data = await api(appUrl(`/api/attempt/${state.id}`)); state = data.attempt; }
+            catch (_) { /* Poll again after a temporary connection failure. */ }
+            finish();
+        }, 1500);
+    }
 }
 async function submitAssessment(automatic = false, reason = "submitted") {
     if (state.submitted || submitting || config.standalone) return;
@@ -367,8 +388,6 @@ function updateTimer() {
     document.getElementById("timer").textContent = `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, "0")}`;
     if (!remaining) persist().catch(() => {});
 }
-document.getElementById("submit-assessment").onclick = () => submitAssessment();
-document.getElementById("submit-assessment").hidden = config.standalone || Boolean(assessment.time_limit_seconds && !assessment.submittable_early);
 document.getElementById("complete-home").onclick = () => location.href = config.homeUrl;
 document.getElementById("exit-assessment").onclick = async event => {
     if (config.standalone || state.submitted) return;
@@ -381,7 +400,7 @@ document.getElementById("exit-assessment").onclick = async event => {
 };
 function beaconSave() {
     if (config.standalone || state.submitted || !state.id) return;
-    const body = {answers: state.answers, ...(assessment.auto_submit_on_leave ? {submit: true, reason: "leave"} : {})};
+    const body = {answers: state.answers, languages: state.languages, ...(assessment.auto_submit_on_leave ? {submit: true, reason: "leave"} : {})};
     navigator.sendBeacon(appUrl(`/api/attempt/${state.id}`), new Blob([JSON.stringify(body)], {type: "application/json"}));
 }
 window.addEventListener("pagehide", beaconSave);
@@ -392,23 +411,31 @@ document.addEventListener("keydown", event => {
 async function initialize() {
     try {
         if (!config.standalone) {
+            let credentials = {};
+            try { credentials = JSON.parse(sessionStorage.getItem("assessment-credentials") || "{}"); } catch (_) {}
+            if (!config.resumeActive && (assessment.required_credentials || []).some(key => !credentials[key]?.trim())) {
+                location.href = config.homeUrl; return;
+            }
             let message = "Assessment passcode";
             while (true) {
                 let passcode;
-                if (assessment.requires_passcode) {
+                if (assessment.requires_passcode && !config.resumeActive) {
                     passcode = prompt(message);
                     if (passcode === null) { location.href = config.homeUrl; return; }
                 }
                 try {
-                    const data = await api(config.attemptUrl, {passcode});
+                    const data = await api(config.attemptUrl, {passcode, credentials});
                     state = data.attempt; acceptClock(data); break;
                 } catch (error) {
                     if (!assessment.requires_passcode || error.message !== "Incorrect passcode") throw error;
+                    config.resumeActive = false;
                     message = "Incorrect passcode. Please try again.";
                 }
             }
         }
-        buildNavigation(); showQuestion(0); updateScore(); updateTimer();
+        buildNavigation();
+        if (state.submitted) finish(); else showQuestion(0);
+        updateScore(); updateTimer();
         if (config.standalone) document.getElementById("question-nav").hidden = true;
         setInterval(updateTimer, 1000);
         if (!config.standalone) setInterval(async () => {
@@ -417,7 +444,6 @@ async function initialize() {
         }, 5000);
     } catch (error) {
         document.getElementById("question-host").textContent = error.message;
-        document.getElementById("submit-assessment").disabled = true;
     }
 }
 initialize();

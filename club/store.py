@@ -24,6 +24,15 @@ def database():
         last_seen REAL NOT NULL, ip TEXT, user_agent TEXT)""")
     try:
         connection.execute("BEGIN IMMEDIATE")
+        columns = {row['name'] for row in connection.execute('PRAGMA table_info(attempts)')}
+        for name, definition in [('credentials', "TEXT NOT NULL DEFAULT '{}'"),
+                                 ('languages', "TEXT NOT NULL DEFAULT '{}'"),
+                                 ('grading_status', "TEXT NOT NULL DEFAULT 'pending'"),
+                                 ('grading_started', 'REAL'), ('grading_error', 'TEXT')]:
+            if name not in columns:
+                connection.execute(f'ALTER TABLE attempts ADD COLUMN {name} {definition}')
+        connection.execute('CREATE INDEX IF NOT EXISTS attempt_owner ON attempts(owner, assessment, started)')
+        connection.execute('CREATE INDEX IF NOT EXISTS grading_queue ON attempts(grading_status, submitted)')
         yield connection
         connection.commit()
     finally:
@@ -40,7 +49,7 @@ def unpack(row):
     if row is None:
         return None
     item = dict(row)
-    for key in ("answers", "score"):
+    for key in ("answers", "score", "credentials", "languages"):
         item[key] = json.loads(item[key])
     return item
 
@@ -51,7 +60,7 @@ def latest(db, owner, assessment):
                              "ORDER BY started DESC LIMIT 1", (owner, assessment)).fetchone())
 
 
-def start(db, owner, item):
+def start(db, owner, item, credentials=None):
     previous = latest(db, owner, item["id"])
     if previous and previous["submitted"] is None:
         return previous
@@ -61,17 +70,15 @@ def start(db, owner, item):
     now = time.time()
     attempt_id = uuid.uuid4().hex
     deadline = now + item["time_limit_seconds"] if item["time_limit_seconds"] else None
-    db.execute("INSERT INTO attempts (id,owner,assessment,started,deadline,updated) VALUES (?,?,?,?,?,?)",
-               (attempt_id, owner, item["id"], now, deadline, now))
+    db.execute("INSERT INTO attempts (id,owner,assessment,started,deadline,updated,credentials) VALUES (?,?,?,?,?,?,?)",
+               (attempt_id, owner, item["id"], now, deadline, now, json.dumps(credentials or {})))
     return latest(db, owner, item["id"])
 
 
 def count_attempts(db, owner, assessment):
-    # A deleted cookie cannot reset a quota. A network/browser match is only a
-    # quota signal: it must NEVER reveal another device's answers or identity.
-    return db.execute("""SELECT count(*) FROM attempts a JOIN devices d ON d.id=a.owner
-        WHERE a.assessment=? AND (a.owner=? OR d.fingerprint=(SELECT fingerprint FROM devices WHERE id=?))""",
-                      (assessment, owner, owner)).fetchone()[0]
+    # Shared IPs and browser versions are not identities (especially behind a proxy).
+    return db.execute('SELECT count(*) FROM attempts WHERE assessment=? AND owner=?',
+                      (assessment, owner)).fetchone()[0]
 
 
 def owned(db, attempt_id, owner):

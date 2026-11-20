@@ -10,7 +10,14 @@ select, input, textarea { border: 1px solid #494949; border-radius: 3px; backgro
 :focus-visible { outline: 2px solid #7bafe1; outline-offset: 2px; }
 [hidden] { display: none !important; }
 .home-page { padding: 40px 24px; }
-.home-card { max-width: 900px; margin: 0 auto; }
+.home-card { max-width: 1200px; margin: 0 auto; }
+.assignments-layout { display: grid; grid-template-columns: minmax(220px, 280px) minmax(0, 1fr); gap: 36px; }
+.credentials-panel h2 { font-size: 18px; }
+.credentials-panel p, .assessment-score { color: #aaa; font-size: 13px; }
+.credentials-panel label { display: block; margin: 16px 0; }
+.credentials-panel input { display: block; width: 100%; margin-top: 6px; }
+.assessment-entry-actions { text-align: right; }
+@media (max-width: 720px) { .assignments-layout { grid-template-columns: 1fr; } }
 .home-card h1 { font-size: 24px; margin: 0 0 24px; }
 .assessment-list { list-style: none; padding: 0; margin: 0; }
 .assessment-list li { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 20px 0; border-top: 1px solid #383838; }

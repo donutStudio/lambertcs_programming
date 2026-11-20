@@ -1,6 +1,10 @@
 {
   "id": "tryout_test",
-  "allowed_reference_sheets": ["py_reference", "java_reference", "cpp_reference"],
+  "allowed_reference_sheets": [
+    "py_reference",
+    "java_reference",
+    "cpp_reference"
+  ],
   "title": "Lambert Competitive Programming Tryout B (Friday's actual test)",
   "time_limit_seconds": 1800,
   "number_of_attempts": 1,
@@ -27,34 +31,6 @@
     }
   },
   "questions": [
-    {
-      "id": "student",
-      "response_type": "short_answer",
-      "response_config": {
-        "fields": [
-          {
-            "id": "full_name",
-            "question_text": "Full name",
-            "character_limit": 120,
-            "required": true
-          },
-          {
-            "id": "email",
-            "question_text": "Personal Email",
-            "character_limit": 200,
-            "email": true,
-            "required": true
-          },
-          {
-            "id": "student_id",
-            "question_text": "Student ID",
-            "numeric_only": true,
-            "character_limit": 30,
-            "required": true
-          }
-        ]
-      }
-    },
     {
       "id": "instructions",
       "response_type": "stimulus_only",
@@ -156,5 +132,10 @@
         "max_score": 100
       }
     }
-  }
+  },
+  "required_credentials": [
+    "full_name",
+    "email",
+    "student_id"
+  ]
 }

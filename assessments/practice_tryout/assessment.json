@@ -1,6 +1,10 @@
 {
   "id": "practice_tryout",
-  "allowed_reference_sheets": ["py_reference", "java_reference", "cpp_reference"],
+  "allowed_reference_sheets": [
+    "py_reference",
+    "java_reference",
+    "cpp_reference"
+  ],
   "title": "Lambert Competitive Programming Practice",
   "time_limit_seconds": 0,
   "number_of_attempts": 0,
@@ -345,5 +349,10 @@
         "max_score": 100
       }
     }
-  }
+  },
+  "required_credentials": [
+    "full_name",
+    "email",
+    "student_id"
+  ]
 }

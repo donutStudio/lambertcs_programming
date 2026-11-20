@@ -35,7 +35,7 @@ async function check(prefix) {
 
     const homeRequests = [], events = {};
     const homeContext = vm.createContext({
-        document: {getElementById: () => ({textContent: JSON.stringify({assignmentsUrl: prefix + '/api/assignments'})}),
+        document: {getElementById: id => id === 'credentials-form' ? null : ({textContent: JSON.stringify({assignmentsUrl: prefix + '/api/assignments'})}),
             querySelectorAll: () => []},
         window: {addEventListener(name, handler) { events[name] = handler; }},
         fetch: async url => { homeRequests.push(url); return {ok: true, json: async () => ({})}; },

@@ -103,7 +103,32 @@ def reference_sheet(assessment_id, sheet_id):
 
 
 def public_attempt(attempt):
-    return {key: attempt[key] for key in ("id", "started", "deadline", "submitted", "answers", "score", "reason")}
+    return {key: attempt[key] for key in ("id", "started", "deadline", "submitted", "answers", "score", "reason", "languages", "grading_status")}
+
+
+@pages.after_request
+def prevent_stale_attempts(response):
+    if request.path.startswith(url_for('pages.index').rstrip('/') + '/api/'):
+        response.headers['Cache-Control'] = 'no-store'
+    return response
+
+
+def clean_credentials(item, values):
+    import re
+    if not isinstance(values, dict):
+        raise ValueError('Enter your student details on the assignments page.')
+    result = {}
+    for key in item.get('required_credentials', []):
+        value = values.get(key, '')
+        if not isinstance(value, str) or not value.strip() or len(value) > 200:
+            raise ValueError(f'Enter {key.replace("_", " ")} on the assignments page.')
+        value = value.strip()
+        if key == 'email' and not re.fullmatch(r'[^\s@]+@[^\s@]+\.[^\s@]+', value):
+            raise ValueError('Enter a valid personal email.')
+        if key == 'student_id' and not re.fullmatch(r'[0-9]+', value):
+            raise ValueError('Student ID must contain digits only.')
+        result[key] = value
+    return result
 
 
 @pages.get("/")
@@ -118,8 +143,24 @@ def assignments():
         for item in parser.load_all():
             attempt = latest(db, session["device"], item["id"])
             count = count_attempts(db, session["device"], item["id"])
+            score_text = None
+            if attempt and attempt['submitted'] and item['score_visibility']['upon_completion']:
+                if attempt['grading_status'] == 'error':
+                    score_text = 'unavailable — administrator review needed'
+                elif attempt['grading_status'] != 'complete':
+                    score_text = 'waiting'
+                else:
+                    scores = attempt['score']
+                    earned = sum(scores.get(q['id'], {}).get('earned', 0) for q in item['questions'])
+                    maximum = sum(scores.get(q['id'], {}).get('maximum', q['response_config'].get('score_max', 0)) for q in item['questions'])
+                    total = scores.get('_assessment', {'earned': earned, 'maximum': maximum})
+                    earned, maximum = total['earned'], total['maximum']
+                    fmt = item['score_visibility']['score_format']
+                    score_text = f'{round(earned / maximum * 100) if maximum else 0}%' if fmt == 'percent' else f'{earned:g}' if fmt == 'integer' else f'{earned:g}/{maximum:g}'
             result[item["id"]] = {"count": count, "active": bool(attempt and attempt["submitted"] is None),
-                                  "available": not item["number_of_attempts"] or count < item["number_of_attempts"]}
+                                  "available": not item["number_of_attempts"] or count < item["number_of_attempts"],
+                                  "score": score_text,
+                                  "grading_status": attempt['grading_status'] if attempt else None}
     return jsonify(result)
 
 
@@ -139,6 +180,9 @@ def assessment(assessment_id):
               "attemptUrl": url_for("pages.begin_attempt", assessment_id=assessment_id),
               "stimuliHtml": {key: render_markdown(value)
                               for key, value in item.get("stimuli", {}).items()}}
+    with database() as db:
+        previous = latest(db, session['device'], assessment_id)
+        config['resumeActive'] = bool(previous and previous['submitted'] is None)
     return render_template("assessment.html", assessment=item, config=config, monaco_base=MONACO_BASE)
 
 
@@ -152,10 +196,14 @@ def begin_attempt(assessment_id):
         return jsonify(error="Invalid request"), 400
     with database() as db:
         previous = latest(db, session["device"], assessment_id)
+        try:
+            credentials = clean_credentials(item, data.get('credentials', {})) if not (previous and previous['submitted'] is None) else previous['credentials']
+        except ValueError as error:
+            return jsonify(error=str(error)), 400
         if not (previous and previous["submitted"] is None) and item["passcode"] and data.get("passcode") != item["passcode"]:
             return jsonify(error="Incorrect passcode"), 403
         try:
-            attempt = start(db, session["device"], item)
+            attempt = start(db, session["device"], item, credentials)
         except ValueError as error:
             return jsonify(error=str(error)), 403
     return jsonify(attempt=public_attempt(attempt), server_time=time.time())
@@ -212,6 +260,11 @@ def attempt_state(attempt_id):
                         if value and ((field.get("email") and not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", value)) or (field.get("numeric_only") and not value.isdecimal())):
                             return jsonify(error=f'Invalid {field.get("question_text", "answer")}'), 400
             now = time.time()
+            languages = data.get('languages', attempt['languages'])
+            if not isinstance(languages, dict):
+                return jsonify(error='Invalid languages'), 400
+            languages = {q['id']: languages[q['id']] for q in item['questions']
+                         if q['response_type'] == 'code_editor' and languages.get(q['id']) in q['response_config']['supported_languages']}
             score = attempt["score"]
             if answers != attempt["answers"]:
                 score.pop("_assessment", None)
@@ -224,17 +277,9 @@ def attempt_state(attempt_id):
                 code = answers.get(question_id, {}).get(result["language"], "")
                 if hashlib.sha256(code.encode()).hexdigest() != result["code_sha256"]:
                     del score[question_id]
-            if data.get("submit"):
-                from .grading import grade_response
-                for question in item["questions"]:
-                    grader = question["response_config"].get("grader", {})
-                    if question["response_type"] == "short_answer" and grader.get("code"):
-                        result = grade_response(None, "", grader, answers)
-                        score[question["id"]] = {"earned": result["earned"], "maximum": result["maximum"]}
-                        if result["assessment_score"] is not None: score["_assessment"] = result["assessment_score"]
-            db.execute("UPDATE attempts SET answers=?, updated=?, submitted=?, reason=?, score=? WHERE id=?",
+            db.execute("UPDATE attempts SET answers=?, updated=?, submitted=?, reason=?, score=?, languages=? WHERE id=?",
                        (json.dumps(answers), now, now if data.get("submit") else None,
-                        "leave" if data.get("reason") == "leave" and data.get("submit") else "submitted" if data.get("submit") else None, json.dumps(score), attempt_id))
+                        "leave" if data.get("reason") == "leave" and data.get("submit") else "submitted" if data.get("submit") else None, json.dumps(score), json.dumps(languages), attempt_id))
             attempt = owned(db, attempt_id, session["device"])
     return jsonify(attempt=public_attempt(attempt), server_time=time.time())
 
