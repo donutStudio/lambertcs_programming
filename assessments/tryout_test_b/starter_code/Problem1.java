@@ -1,7 +1,7 @@
 import java.util.Scanner;
 
 public class Problem1 {
-    public static long oddOnesOut(int n) {
+    public static long fizzesAndBuzzes(int n) {
         // Your code here!
         return 0;
     }
@@ -10,7 +10,7 @@ public class Problem1 {
         try (Scanner input = new Scanner(System.in)) {
             System.err.print("Enter a number: ");
             System.err.flush();
-            System.out.println(oddOnesOut(Integer.parseInt(input.nextLine().trim())));
+            System.out.println(fizzesAndBuzzes(Integer.parseInt(input.nextLine().trim())));
         }
     }
 }

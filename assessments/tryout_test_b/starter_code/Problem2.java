@@ -1,7 +1,7 @@
 import java.util.Scanner;
 
 public class Problem2 {
-    public static boolean swappedSpelling(String misspelling, String spelling) {
+    public static boolean splling(String misspelling, String spelling) {
         // Your code here! Return true for Yes! or false for No!.
         return false;
     }
@@ -14,7 +14,7 @@ public class Problem2 {
             System.err.print("Enter second string (correct spelling): ");
             System.err.flush();
             String spelling = input.nextLine();
-            System.out.println(swappedSpelling(misspelling, spelling) ? "Yes!" : "No!");
+            System.out.println(splling(misspelling, spelling) ? "Yes!" : "No!");
         }
     }
 }

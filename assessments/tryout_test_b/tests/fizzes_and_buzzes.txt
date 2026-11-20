@@ -1,13 +1,13 @@
 [
   {
     "input": "13\n",
-    "expected": "37",
+    "expected": "45",
     "large": false,
     "hidden": false
   },
   {
     "input": "40\n",
-    "expected": "336",
+    "expected": "363",
     "large": false,
     "hidden": false
   },
@@ -24,38 +24,38 @@
     "hidden": true
   },
   {
-    "input": "2\n",
-    "expected": "0",
-    "large": false,
-    "hidden": true
-  },
-  {
     "input": "3\n",
     "expected": "3",
     "large": false,
     "hidden": true
   },
   {
-    "input": "11\n",
-    "expected": "24",
+    "input": "5\n",
+    "expected": "8",
     "large": false,
     "hidden": true
   },
   {
-    "input": "21\n",
-    "expected": "88",
+    "input": "15\n",
+    "expected": "45",
+    "large": false,
+    "hidden": true
+  },
+  {
+    "input": "30\n",
+    "expected": "180",
     "large": false,
     "hidden": true
   },
   {
     "input": "999999\n",
-    "expected": "200000400000",
+    "expected": "200000000003",
     "large": true,
     "hidden": true
   },
   {
     "input": "1000000\n",
-    "expected": "200000400000",
+    "expected": "200001000003",
     "large": true,
     "hidden": true
   }

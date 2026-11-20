@@ -7,7 +7,7 @@
   ],
   "title": "Lambert Competitive Programming Tryout B (Friday's actual test)",
   "time_limit_seconds": 1800,
-  "number_of_attempts": 1,
+  "number_of_attempts": 0,
   "passcode": "C0D3",
   "submittable_early": false,
   "auto_submit_on_leave": false,
@@ -20,14 +20,14 @@
     "instructions": {
       "$file": "instructions.md"
     },
-    "odd_ones_out": {
-      "$file": "odd_ones_out.md"
+    "dropping_grades": {
+      "$file": "dropping_grades.md"
     },
-    "academic_comeback": {
-      "$file": "academic_comeback.md"
+    "fizzes_and_buzzes": {
+      "$file": "fizzes_and_buzzes.md"
     },
-    "swapped_spelling": {
-      "$file": "swapped_spelling.md"
+    "splling": {
+      "$file": "splling.md"
     }
   },
   "questions": [
@@ -37,84 +37,84 @@
       "stimulus": "instructions"
     },
     {
-      "id": "odd_ones_out",
+      "id": "fizzes_and_buzzes",
       "response_type": "code_editor",
-      "stimulus": "odd_ones_out",
+      "stimulus": "fizzes_and_buzzes",
       "response_config": {
         "default_code": {
           "python": {
-            "$file": "starter_code/odd_ones_out.py"
+            "$file": "starter_code/fizzes_and_buzzes.py"
           },
           "java": {
-            "$file": "starter_code/TryoutBOddOnesOut.java"
+            "$file": "starter_code/Problem1.java"
           },
           "cpp": {
-            "$file": "starter_code/odd_ones_out.cpp"
+            "$file": "starter_code/fizzes_and_buzzes.cpp"
           }
         },
         "grader": {
           "code": {
-            "$file": "tests/odd_ones_out.py"
+            "$file": "tests/fizzes_and_buzzes.py"
           },
           "assets": {
             "cases": {
-              "$file": "tests/odd_ones_out.txt"
+              "$file": "tests/fizzes_and_buzzes.txt"
             }
           }
         }
       }
     },
     {
-      "id": "swapped_spelling",
+      "id": "splling",
       "response_type": "code_editor",
-      "stimulus": "swapped_spelling",
+      "stimulus": "splling",
       "response_config": {
         "default_code": {
           "python": {
-            "$file": "starter_code/swapped_spelling.py"
+            "$file": "starter_code/splling.py"
           },
           "java": {
-            "$file": "starter_code/TryoutBSwappedSpelling.java"
+            "$file": "starter_code/Problem2.java"
           },
           "cpp": {
-            "$file": "starter_code/swapped_spelling.cpp"
+            "$file": "starter_code/splling.cpp"
           }
         },
         "grader": {
           "code": {
-            "$file": "tests/swapped_spelling.py"
+            "$file": "tests/splling.py"
           },
           "assets": {
             "cases": {
-              "$file": "tests/swapped_spelling.txt"
+              "$file": "tests/splling.txt"
             }
           }
         }
       }
     },
     {
-      "id": "academic_comeback",
+      "id": "dropping_grades",
       "response_type": "code_editor",
-      "stimulus": "academic_comeback",
+      "stimulus": "dropping_grades",
       "response_config": {
         "default_code": {
           "python": {
-            "$file": "starter_code/academic_comeback.py"
+            "$file": "starter_code/dropping_grades.py"
           },
           "java": {
-            "$file": "starter_code/TryoutBAcademicComeback.java"
+            "$file": "starter_code/Problem3.java"
           },
           "cpp": {
-            "$file": "starter_code/academic_comeback.cpp"
+            "$file": "starter_code/dropping_grades.cpp"
           }
         },
         "grader": {
           "code": {
-            "$file": "tests/academic_comeback.py"
+            "$file": "tests/dropping_grades.py"
           },
           "assets": {
             "cases": {
-              "$file": "tests/academic_comeback.txt"
+              "$file": "tests/dropping_grades.txt"
             }
           }
         }

@@ -1,7 +1,7 @@
 import java.util.Scanner;
 
 public class Problem3 {
-    public static int academicComeback(int[] grades) {
+    public static int droppingGrades(int[] grades) {
         // Your code here!
         return 0;
     }
@@ -25,7 +25,7 @@ public class Problem3 {
             System.err.print("Enter grades separated by spaces: ");
             System.err.flush();
             int[] grades = readNumbers(input);
-            System.out.println(academicComeback(grades));
+            System.out.println(droppingGrades(grades));
         }
     }
 }
