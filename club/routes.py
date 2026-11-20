@@ -58,6 +58,14 @@ def find_assessment(assessment_id):
     return next((item for item in parser.load_all() if item["id"] == assessment_id), None)
 
 
+def assessment_for_device(assessment_id):
+    with database() as db:
+        attempt = latest(db, session['device'], assessment_id)
+        if attempt and attempt['submitted'] is None and attempt.get('definition'):
+            return json.loads(attempt['definition'])
+    return find_assessment(assessment_id)
+
+
 def public_assessment(item):
     references = [{"id": key, "name": reference_name(item, key),
                    "url": url_for("pages.reference_sheet", assessment_id=item["id"], sheet_id=key)}
@@ -75,7 +83,7 @@ def public_assessment(item):
 
 @pages.get("/api/assessment/<assessment_id>/references/<sheet_id>")
 def reference_sheet(assessment_id, sheet_id):
-    item = find_assessment(assessment_id)
+    item = assessment_for_device(assessment_id)
     if item is None or sheet_id not in item.get("allowed_reference_sheets", []):
         return jsonify(error="Reference sheet not found"), 404
     sections = split_sections(reference_source(item, sheet_id))
@@ -143,19 +151,20 @@ def assignments():
         for item in parser.load_all():
             attempt = latest(db, session["device"], item["id"])
             count = count_attempts(db, session["device"], item["id"])
+            score_item = json.loads(attempt['definition']) if attempt and attempt.get('definition') else item
             score_text = None
-            if attempt and attempt['submitted'] and item['score_visibility']['upon_completion']:
+            if attempt and attempt['submitted'] and score_item['score_visibility']['upon_completion']:
                 if attempt['grading_status'] == 'error':
                     score_text = 'unavailable — administrator review needed'
                 elif attempt['grading_status'] != 'complete':
                     score_text = 'waiting'
                 else:
                     scores = attempt['score']
-                    earned = sum(scores.get(q['id'], {}).get('earned', 0) for q in item['questions'])
-                    maximum = sum(scores.get(q['id'], {}).get('maximum', q['response_config'].get('score_max', 0)) for q in item['questions'])
+                    earned = sum(scores.get(q['id'], {}).get('earned', 0) for q in score_item['questions'])
+                    maximum = sum(scores.get(q['id'], {}).get('maximum', q['response_config'].get('score_max', 0)) for q in score_item['questions'])
                     total = scores.get('_assessment', {'earned': earned, 'maximum': maximum})
                     earned, maximum = total['earned'], total['maximum']
-                    fmt = item['score_visibility']['score_format']
+                    fmt = score_item['score_visibility']['score_format']
                     score_text = f'{round(earned / maximum * 100) if maximum else 0}%' if fmt == 'percent' else f'{earned:g}' if fmt == 'integer' else f'{earned:g}/{maximum:g}'
             result[item["id"]] = {"count": count, "active": bool(attempt and attempt["submitted"] is None),
                                   "available": not item["number_of_attempts"] or count < item["number_of_attempts"],
@@ -166,7 +175,7 @@ def assignments():
 
 @pages.get("/assessment/<assessment_id>")
 def assessment(assessment_id):
-    item = find_assessment(assessment_id)
+    item = assessment_for_device(assessment_id)
     if item is None:
         return "Assessment not found", 404
     item = public_assessment(item)
@@ -188,7 +197,7 @@ def assessment(assessment_id):
 
 @pages.post("/api/assessment/<assessment_id>/attempt")
 def begin_attempt(assessment_id):
-    item = find_assessment(assessment_id)
+    item = assessment_for_device(assessment_id)
     if item is None:
         return jsonify(error="Assessment not found"), 404
     data = request.get_json(silent=True) or {}
@@ -196,6 +205,8 @@ def begin_attempt(assessment_id):
         return jsonify(error="Invalid request"), 400
     with database() as db:
         previous = latest(db, session["device"], assessment_id)
+        if previous and previous['submitted'] is None and previous.get('definition'):
+            item = json.loads(previous['definition'])
         try:
             credentials = clean_credentials(item, data.get('credentials', {})) if not (previous and previous['submitted'] is None) else previous['credentials']
         except ValueError as error:
@@ -237,7 +248,7 @@ def attempt_state(attempt_id):
         attempt = owned(db, attempt_id, session["device"])
         if attempt is None:
             return jsonify(error="Attempt not found"), 404
-        item = find_assessment(attempt["assessment"])
+        item = json.loads(attempt['definition']) if attempt.get('definition') else find_assessment(attempt["assessment"])
         if request.method == "POST":
             data = request.get_json(silent=True)
             if not isinstance(data, dict):
@@ -329,7 +340,7 @@ def run():
 def run_tests(assessment_id):
     if not execution_allowed():
         return jsonify(error="Remote execution requires an isolated runner."), 503
-    item = find_assessment(assessment_id)
+    item = assessment_for_device(assessment_id)
     data = request.get_json(silent=True)
     language, code, error = validate_run_request(data)
     if error:
@@ -347,6 +358,10 @@ def run_tests(assessment_id):
         if not attempt or attempt["assessment"] != assessment_id or attempt["submitted"] is not None:
             return jsonify(error="An active attempt is required"), 403
     original_code = attempt["answers"].get(question["id"], {}).get(language)
+    if attempt.get('definition'):
+        snapshot = json.loads(attempt['definition'])
+        question = next(q for q in snapshot['questions'] if q['id'] == data.get('question_id'))
+        c = question['response_config']
     from .grading import grade_response
     if not c.get("grader", {}).get("code"):
         return jsonify(error="No grader configured"), 400

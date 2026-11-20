@@ -1,11 +1,7 @@
-import sys
-
 def merged_line(first, second):
     # Your code here!
     pass
 
-print('Enter first separated by spaces: ', end="", file=sys.stderr, flush=True)
-first = list(map(int, input().split()))
-print('Enter second separated by spaces: ', end="", file=sys.stderr, flush=True)
-second = list(map(int, input().split()))
+first = list(map(int, input('Enter first separated by spaces: ').split()))
+second = list(map(int, input('Enter second separated by spaces: ').split()))
 print(merged_line(first, second))

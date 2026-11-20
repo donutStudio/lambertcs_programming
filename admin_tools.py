@@ -53,6 +53,7 @@ def main():
     regrade = sub.add_parser('regrade', help='Queue a submitted attempt for final grading')
     regrade.add_argument('attempt_id')
     sub.add_parser('grade-pending', help='Run queued graders locally using the project venv automatically')
+    sub.add_parser('reload', help='Validate assessment files; new requests see updates without restarting the server')
     args = parser.parse_args()
     since = None
     if getattr(args, 'since', None):
@@ -71,6 +72,14 @@ def main():
         for name in ('java', 'javac', 'g++'):
             print(name + ':', shutil.which(name) or 'not on PATH')
         return
+    if args.command == 'reload':
+        runtime = str(venv) if venv.exists() else sys.executable
+        command = ('from club.assessments import AssessmentParser; '
+                   'items=AssessmentParser().load_all(); '
+                   'ids=[item["id"] for item in items]; '
+                   'assert len(ids)==len(set(ids)), "Duplicate assessment IDs"; '
+                   'print("Validated %d assessments. Updates are read automatically; no restart needed." % len(items))')
+        raise SystemExit(subprocess.call([runtime, '-c', command], cwd=str(ROOT)))
     if args.command == 'grade-pending':
         runtime = str(venv) if venv.exists() else sys.executable
         command = ('from pathlib import Path; from club import create_app; '

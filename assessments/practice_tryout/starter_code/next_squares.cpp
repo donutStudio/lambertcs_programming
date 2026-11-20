@@ -1,10 +1,7 @@
 #include <iostream>
-#include <sstream>
-#include <string>
-#include <vector>
 using namespace std;
 
-int nextSquares(int k, int n) {
+int nextSquares([[maybe_unused]] int k, [[maybe_unused]] int n) {
     // Your code here!
     return 0;
 }

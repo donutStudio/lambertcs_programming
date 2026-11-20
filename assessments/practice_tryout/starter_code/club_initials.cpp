@@ -1,10 +1,8 @@
 #include <iostream>
-#include <sstream>
 #include <string>
-#include <vector>
 using namespace std;
 
-string clubInitials(const string& name) {
+string clubInitials([[maybe_unused]] const string& name) {
     // Your code here!
     return "";
 }

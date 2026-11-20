@@ -86,16 +86,28 @@ class AssessmentFlowTests(unittest.TestCase):
         self.assertEqual(self.client.post(url, json={'submit': True, 'answers': {}}).json['attempt']['answers'], answers)
 
     def test_timeout_grades_without_client_and_one_failure_does_not_skip_others(self):
+        self.item['questions'][0]['response_config']['grader']['code'] = 'def grade(ctx): raise ValueError("broken grader")'
         attempt = self.begin().json['attempt']
         with self.app.app_context(), database() as db:
             db.execute('UPDATE attempts SET deadline=?, answers=? WHERE id=?', (time.time()-1, json.dumps({'last': {'python': 'print(42)'}}), attempt['id']))
-        self.item['questions'][0]['response_config']['grader']['code'] = 'def grade(ctx): raise ValueError("broken grader")'
         with self.assertLogs(self.app.logger, level='ERROR'):
             self.assertTrue(grade_next(self.app))
         final = self.client.get('/api/attempt/' + attempt['id']).json['attempt']
         self.assertEqual(final['reason'], 'timeout')
         self.assertEqual(final['grading_status'], 'error')
         self.assertEqual(final['score']['last']['earned'], 10)
+
+    def test_active_attempt_keeps_original_definition_after_edits(self):
+        attempt = self.begin().json['attempt']
+        self.item['title'] = 'Changed title'
+        self.item['questions'] = []
+        response = self.client.get('/assessment/demo')
+        self.assertIn('Demo', response.get_data(as_text=True))
+        url = '/api/attempt/' + attempt['id']
+        answers = {'first': {'python': 'print(42)'}, 'last': {'python': 'print(42)'}}
+        self.client.post(url, json={'answers': answers, 'submit': True})
+        self.assertTrue(grade_next(self.app))
+        self.assertEqual(self.client.get(url).json['attempt']['score']['first']['earned'], 10)
 
     def test_python_prompts_ignored_but_actual_wrong_output_fails(self):
         grader = {'code': 'def grade(ctx): ctx.check("1\\n2\\n", "3", points=1)', 'max_score': 1}

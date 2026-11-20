@@ -1,7 +1,7 @@
 #include <iostream>
 using namespace std;
 
-long long oddOnesOut(int n) {
+long long oddOnesOut([[maybe_unused]] int n) {
     // Your code here!
     return 0;
 }

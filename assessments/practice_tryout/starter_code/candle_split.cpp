@@ -1,10 +1,7 @@
 #include <iostream>
-#include <sstream>
-#include <string>
-#include <vector>
 using namespace std;
 
-bool candleSplit(int n) {
+bool candleSplit([[maybe_unused]] int n) {
     // Your code here! Return true for YES or false for NO.
     return false;
 }

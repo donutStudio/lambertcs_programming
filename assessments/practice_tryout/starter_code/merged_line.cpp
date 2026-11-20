@@ -4,7 +4,7 @@
 #include <vector>
 using namespace std;
 
-string mergedLine(const vector<int>& first, const vector<int>& second) {
+string mergedLine([[maybe_unused]] const vector<int>& first, [[maybe_unused]] const vector<int>& second) {
     // Your code here!
     return "";
 }

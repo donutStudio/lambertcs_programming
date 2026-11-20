@@ -4,7 +4,7 @@
 #include <vector>
 using namespace std;
 
-int readingGoal(int goal, const vector<int>& pages) {
+int readingGoal([[maybe_unused]] int goal, [[maybe_unused]] const vector<int>& pages) {
     // Your code here!
     return 0;
 }

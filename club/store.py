@@ -31,6 +31,8 @@ def database():
                                  ('grading_started', 'REAL'), ('grading_error', 'TEXT')]:
             if name not in columns:
                 connection.execute(f'ALTER TABLE attempts ADD COLUMN {name} {definition}')
+        if 'definition' not in columns:
+            connection.execute('ALTER TABLE attempts ADD COLUMN definition TEXT')
         connection.execute('CREATE INDEX IF NOT EXISTS attempt_owner ON attempts(owner, assessment, started)')
         connection.execute('CREATE INDEX IF NOT EXISTS grading_queue ON attempts(grading_status, submitted)')
         yield connection
@@ -70,8 +72,8 @@ def start(db, owner, item, credentials=None):
     now = time.time()
     attempt_id = uuid.uuid4().hex
     deadline = now + item["time_limit_seconds"] if item["time_limit_seconds"] else None
-    db.execute("INSERT INTO attempts (id,owner,assessment,started,deadline,updated,credentials) VALUES (?,?,?,?,?,?,?)",
-               (attempt_id, owner, item["id"], now, deadline, now, json.dumps(credentials or {})))
+    db.execute("INSERT INTO attempts (id,owner,assessment,started,deadline,updated,credentials,definition) VALUES (?,?,?,?,?,?,?,?)",
+               (attempt_id, owner, item["id"], now, deadline, now, json.dumps(credentials or {}), json.dumps(item)))
     return latest(db, owner, item["id"])
 
 

@@ -1,10 +1,18 @@
 """Compile and execute submitted programs on the local machine."""
 from pathlib import Path
 from tempfile import TemporaryDirectory
+import re
 import subprocess
 import sys
 
 from .config import MAX_OUTPUT_LENGTH, TIMEOUT
+
+
+def java_class_name(code):
+    """Use the declared public class for the temporary filename and entry point."""
+    declarations = re.sub(r'/\*.*?\*/|//[^\n]*|"(?:\\.|[^"\\])*"', '', code, flags=re.S)
+    match = re.search(r'\bpublic\s+(?:(?:final|abstract)\s+)*class\s+([A-Za-z_$][\w$]*)', declarations)
+    return match.group(1) if match else 'Main'
 
 
 def execute(command, cwd, input_text="", timeout=TIMEOUT):
@@ -35,11 +43,12 @@ def run_code(language, code, input_text=""):
             )
 
         elif language == "java":
-            source = workdir / "Main.java"
+            class_name = java_class_name(code)
+            source = workdir / (class_name + ".java")
             source.write_text(code, encoding="utf-8")
 
             compile_result = execute(
-                ["javac", "Main.java"],
+                ["javac", source.name],
                 workdir, timeout=20
             )
 
@@ -47,7 +56,7 @@ def run_code(language, code, input_text=""):
                 return format_result(compile_result, "compile")
 
             result = execute(
-                ["java", "-cp", str(workdir), "Main"],
+                ["java", "-cp", str(workdir), class_name],
                 workdir, input_text
             )
 

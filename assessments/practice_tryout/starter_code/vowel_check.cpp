@@ -1,10 +1,8 @@
 #include <iostream>
-#include <sstream>
 #include <string>
-#include <vector>
 using namespace std;
 
-int vowelCheck(const string& word) {
+int vowelCheck([[maybe_unused]] const string& word) {
     // Your code here!
     return 0;
 }

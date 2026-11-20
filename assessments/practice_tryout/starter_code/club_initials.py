@@ -1,9 +1,6 @@
-import sys
-
 def club_initials(name):
     # Your code here!
     pass
 
-print('Enter name: ', end="", file=sys.stderr, flush=True)
-name = input()
+name = input('Enter name: ')
 print(club_initials(name))

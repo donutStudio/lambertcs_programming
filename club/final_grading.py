@@ -27,7 +27,7 @@ def grade_next(app):
         score = {}
         errors = []
         try:
-            item = find_assessment(attempt['assessment'])
+            item = json.loads(attempt['definition']) if attempt.get('definition') else find_assessment(attempt['assessment'])
             if item is None:
                 raise ValueError('Assessment definition is missing')
             for question in item['questions']:

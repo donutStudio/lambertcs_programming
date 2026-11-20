@@ -67,7 +67,7 @@
             "$file": "starter_code/candle_split.py"
           },
           "java": {
-            "$file": "starter_code/candle_split.java"
+            "$file": "starter_code/CandleSplit.java"
           },
           "cpp": {
             "$file": "starter_code/candle_split.cpp"
@@ -95,7 +95,7 @@
             "$file": "starter_code/digit_difference.py"
           },
           "java": {
-            "$file": "starter_code/digit_difference.java"
+            "$file": "starter_code/DigitDifference.java"
           },
           "cpp": {
             "$file": "starter_code/digit_difference.cpp"
@@ -123,7 +123,7 @@
             "$file": "starter_code/vowel_check.py"
           },
           "java": {
-            "$file": "starter_code/vowel_check.java"
+            "$file": "starter_code/VowelCheck.java"
           },
           "cpp": {
             "$file": "starter_code/vowel_check.cpp"
@@ -151,7 +151,7 @@
             "$file": "starter_code/next_squares.py"
           },
           "java": {
-            "$file": "starter_code/next_squares.java"
+            "$file": "starter_code/NextSquares.java"
           },
           "cpp": {
             "$file": "starter_code/next_squares.cpp"
@@ -179,7 +179,7 @@
             "$file": "starter_code/club_initials.py"
           },
           "java": {
-            "$file": "starter_code/club_initials.java"
+            "$file": "starter_code/ClubInitials.java"
           },
           "cpp": {
             "$file": "starter_code/club_initials.cpp"
@@ -207,7 +207,7 @@
             "$file": "starter_code/seat_shift.py"
           },
           "java": {
-            "$file": "starter_code/seat_shift.java"
+            "$file": "starter_code/SeatShift.java"
           },
           "cpp": {
             "$file": "starter_code/seat_shift.cpp"
@@ -235,7 +235,7 @@
             "$file": "starter_code/practice_streak.py"
           },
           "java": {
-            "$file": "starter_code/practice_streak.java"
+            "$file": "starter_code/PracticeStreak.java"
           },
           "cpp": {
             "$file": "starter_code/practice_streak.cpp"
@@ -263,7 +263,7 @@
             "$file": "starter_code/snack_vote.py"
           },
           "java": {
-            "$file": "starter_code/snack_vote.java"
+            "$file": "starter_code/SnackVote.java"
           },
           "cpp": {
             "$file": "starter_code/snack_vote.cpp"
@@ -291,7 +291,7 @@
             "$file": "starter_code/merged_line.py"
           },
           "java": {
-            "$file": "starter_code/merged_line.java"
+            "$file": "starter_code/MergedLine.java"
           },
           "cpp": {
             "$file": "starter_code/merged_line.cpp"
@@ -319,7 +319,7 @@
             "$file": "starter_code/reading_goal.py"
           },
           "java": {
-            "$file": "starter_code/reading_goal.java"
+            "$file": "starter_code/ReadingGoal.java"
           },
           "cpp": {
             "$file": "starter_code/reading_goal.cpp"

@@ -1,10 +1,7 @@
 #include <iostream>
-#include <sstream>
-#include <string>
-#include <vector>
 using namespace std;
 
-int digitDifference(int n) {
+int digitDifference([[maybe_unused]] int n) {
     // Your code here!
     return 0;
 }

@@ -217,7 +217,7 @@ function renderCodeEditor(question, host) {
     clear.onclick = () => { output.textContent = ""; };
     screen.onclick = () => { if (!input.hidden && !window.getSelection().toString()) input.focus(); };
     let editor = null, disposed = false, diagnosticTimer, diagnosticAbort, terminalId, pollTimer, focusedTerminal = false;
-    function filename() { return select.value === "python" ? "main.py" : select.value === "java" ? "Main.java" : "main.cpp"; }
+    function filename() { return select.value === "python" ? "main.py" : select.value === "java" ? ((getCode() || c.default_code.java || "").match(/\bpublic\s+(?:(?:final|abstract)\s+)*class\s+([A-Za-z_$][\w$]*)/)?.[1] || "Main") + ".java" : "main.cpp"; }
     function refreshFilename() { fileRow.textContent = fileTab.textContent = filename(); }
     refreshFilename();
     function getCode() { return editor?.getValue() || ""; }

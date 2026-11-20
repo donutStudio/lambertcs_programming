@@ -4,7 +4,7 @@
 #include <vector>
 using namespace std;
 
-int practiceStreak(const vector<int>& days) {
+int practiceStreak([[maybe_unused]] const vector<int>& days) {
     // Your code here!
     return 0;
 }

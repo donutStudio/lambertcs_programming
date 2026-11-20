@@ -2,7 +2,7 @@
 #include <string>
 using namespace std;
 
-bool swappedSpelling(const string& misspelling, const string& spelling) {
+bool swappedSpelling([[maybe_unused]] const string& misspelling, [[maybe_unused]] const string& spelling) {
     // Your code here! Return true for Yes! or false for No!.
     return false;
 }

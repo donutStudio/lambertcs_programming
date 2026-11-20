@@ -2,7 +2,7 @@
 #include <vector>
 using namespace std;
 
-int academicComeback(const vector<int>& grades) {
+int academicComeback([[maybe_unused]] const vector<int>& grades) {
     // Your code here!
     return 0;
 }

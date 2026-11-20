@@ -1,10 +1,8 @@
 #include <iostream>
-#include <sstream>
 #include <string>
-#include <vector>
 using namespace std;
 
-string snackVote(const string& votes) {
+string snackVote([[maybe_unused]] const string& votes) {
     // Your code here!
     return "";
 }

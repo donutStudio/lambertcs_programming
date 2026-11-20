@@ -1,5 +1,5 @@
 {
-  "id": "tryout_test",
+  "id": "tryout_test_b",
   "allowed_reference_sheets": [
     "py_reference",
     "java_reference",
@@ -46,7 +46,7 @@
             "$file": "starter_code/odd_ones_out.py"
           },
           "java": {
-            "$file": "starter_code/odd_ones_out.java"
+            "$file": "starter_code/TryoutBOddOnesOut.java"
           },
           "cpp": {
             "$file": "starter_code/odd_ones_out.cpp"
@@ -74,7 +74,7 @@
             "$file": "starter_code/swapped_spelling.py"
           },
           "java": {
-            "$file": "starter_code/swapped_spelling.java"
+            "$file": "starter_code/TryoutBSwappedSpelling.java"
           },
           "cpp": {
             "$file": "starter_code/swapped_spelling.cpp"
@@ -102,7 +102,7 @@
             "$file": "starter_code/academic_comeback.py"
           },
           "java": {
-            "$file": "starter_code/academic_comeback.java"
+            "$file": "starter_code/TryoutBAcademicComeback.java"
           },
           "cpp": {
             "$file": "starter_code/academic_comeback.cpp"

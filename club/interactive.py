@@ -13,7 +13,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from .config import MAX_OUTPUT_LENGTH
-from .execution import execute
+from .execution import execute, java_class_name
 
 SESSIONS = {}
 LOCK = threading.Lock()
@@ -21,15 +21,16 @@ LOCK = threading.Lock()
 
 def prepare(language, code, directory, compile_timeout=20):
     root = Path(directory)
-    source = root / {"python": "main.py", "java": "Main.java", "cpp": "main.cpp"}[language]
+    class_name = java_class_name(code) if language == "java" else None
+    source = root / {"python": "main.py", "java": (class_name or "Main") + ".java", "cpp": "main.cpp"}[language]
     source.write_text(code, encoding="utf-8")
     if language == "python":
         return [sys.executable, "-I", "-u", str(source)], ""
-    command = ["javac", "Main.java"] if language == "java" else ["g++", "-std=c++17", "main.cpp", "-o", "main"]
+    command = ["javac", source.name] if language == "java" else ["g++", "-std=c++17", "main.cpp", "-o", "main"]
     result = execute(command, root, timeout=compile_timeout)
     if result.returncode:
         return None, (result.stdout + result.stderr)[:MAX_OUTPUT_LENGTH]
-    return (["java", "-cp", str(root), "Main"] if language == "java" else [str(root / ("main.exe" if sys.platform == "win32" else "main"))]), ""
+    return (["java", "-cp", str(root), class_name] if language == "java" else [str(root / ("main.exe" if sys.platform == "win32" else "main"))]), ""
 
 
 class RunningProgram:
@@ -131,7 +132,7 @@ def diagnostics(language, code):
                             "severity": "error", "message": error.msg})
         return markers
     with TemporaryDirectory() as directory:
-        filename = "Main.java" if language == "java" else "main.cpp"
+        filename = java_class_name(code) + ".java" if language == "java" else "main.cpp"
         (Path(directory) / filename).write_text(code, encoding="utf-8")
         command = ["javac", "-Xlint:all", filename] if language == "java" else ["g++", "-std=c++17", "-Wall", "-Wextra", "-fsyntax-only", filename]
         try:
@@ -140,7 +141,7 @@ def diagnostics(language, code):
             return [{"line": 1, "column": 1, "severity": "info", "message": "Diagnostics unavailable: compiler is not installed."}]
         diagnostic_lines = result.stderr.splitlines()
         for index, line in enumerate(diagnostic_lines):
-            match = re.search(r'(?:Main\.java|main\.cpp):(\d+):(?:(\d+):)?\s*(error|warning):\s*(.*)', line)
+            match = re.search(re.escape(filename) + r':(\d+):(?:(\d+):)?\s*(error|warning):\s*(.*)', line)
             if match:
                 number = int(match[1])
                 column = int(match[2] or 1)

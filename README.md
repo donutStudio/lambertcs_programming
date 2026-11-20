@@ -217,3 +217,34 @@ expressions. Display expressions can span lines. Code spans/blocks stay literal;
 escape currency dollar signs as `\$`. In assessment JSON, double backslashes
 (for example `"$\\frac{a}{b}$"`). KaTeX loads from a pinned CDN version; if it
 cannot load, the original math source remains readable.
+## Updating assessments while the server runs
+
+From another SSH terminal, edit an assessment bundle (or add a new bundle and list
+it in `assessments/assignments.json`), then run from the project root:
+
+```bash
+python admin_tools.py reload
+python admin_tools.py reset-device DEVICE_ID --assessment tryout_test --confirm
+```
+
+`reload` validates every listed bundle and checks for duplicate IDs. Assessment
+files are read on demand, so this command does not restart Gunicorn or send a
+signal to screen. Valid edits and newly listed assessments appear on the next
+page load. Save complete, valid files rather than leaving partially written JSON
+in the live directory. Validation errors are printed and return a nonzero status;
+restore the previous valid file if validation fails.
+
+New attempts store a snapshot of their questions, starter code, grading programs,
+references, and settings. Editing a bundle does not change those active attempts
+or their final grading. Submitted scores also use the original definition. Older
+attempts created before this snapshot feature fall back to the current bundle.
+To find someone's device or attempt, use `list --email`, `--student-id`, or
+`--name`, then `reset-device --assessment ... --confirm` or `delete-attempt`.
+Database resets take effect immediately with no server restart. Resetting a
+student who is currently taking that assessment invalidates that attempt; they
+must return to the assignments page to start again. Other students are unaffected.
+
+Java starter filenames and public classes use PascalCase. Tryout A/B names have
+set prefixes to avoid duplicate classes when an IDE indexes the whole repository.
+The website supports these named entry points in Run, grading, and diagnostics,
+while existing `Main` answers continue to work.

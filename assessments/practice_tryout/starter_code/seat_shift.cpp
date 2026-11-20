@@ -4,7 +4,7 @@
 #include <vector>
 using namespace std;
 
-string seatShift(int shift, const vector<int>& seats) {
+string seatShift([[maybe_unused]] int shift, [[maybe_unused]] const vector<int>& seats) {
     // Your code here!
     return "";
 }
